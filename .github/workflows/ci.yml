@@ -20,7 +20,10 @@ jobs:
         run: xcodebuild -version
 
       - name: Select simulator
-        run: echo "SIMULATOR_ID=$(./scripts/ci-simulator-id.sh)" >> "$GITHUB_ENV"
+        run: |
+          simulator_id=$(./scripts/ci-simulator-id.sh)
+          echo "Using simulator $simulator_id"
+          echo "SIMULATOR_ID=$simulator_id" >> "$GITHUB_ENV"
 
       - name: Build and test
         run: |
