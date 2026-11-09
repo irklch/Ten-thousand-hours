@@ -1,0 +1,486 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		83291784AF7842D208ED50EF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E1583F5B81897FB3D2C73179 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4E3AA433EB6FE1BC4129C68B;
+			remoteInfo = TenThousandHours;
+		};
+		B18F20C17AEF74A7E3105E2C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E1583F5B81897FB3D2C73179 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4E3AA433EB6FE1BC4129C68B;
+			remoteInfo = TenThousandHours;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		41F718CE1EB6C28F1162102F /* TenThousandHours.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TenThousandHours.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8E32C34B156E730802293BF7 /* TenThousandHoursTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TenThousandHoursTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A53C8477D42A4DBFA03627D5 /* TenThousandHoursUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TenThousandHoursUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B746BB0B3126721B0F765371 /* TenThousandHours */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TenThousandHours;
+			sourceTree = "<group>";
+		};
+		A1EE1E140EAF7D160B76A05B /* TenThousandHoursTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TenThousandHoursTests;
+			sourceTree = "<group>";
+		};
+		4B9002686642FC1F39FF5B43 /* TenThousandHoursUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TenThousandHoursUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		776B1777304CF2F76B49D33D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		46BDCE06E85E2D4809BAD3ED /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C81D7FFC618C277713F27FFC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1071DE64471030E0D41CFCC6 = {
+			isa = PBXGroup;
+			children = (
+				B746BB0B3126721B0F765371 /* TenThousandHours */,
+				A1EE1E140EAF7D160B76A05B /* TenThousandHoursTests */,
+				4B9002686642FC1F39FF5B43 /* TenThousandHoursUITests */,
+				9DFBC2034F7A87886A88C42B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9DFBC2034F7A87886A88C42B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				41F718CE1EB6C28F1162102F /* TenThousandHours.app */,
+				8E32C34B156E730802293BF7 /* TenThousandHoursTests.xctest */,
+				A53C8477D42A4DBFA03627D5 /* TenThousandHoursUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4E3AA433EB6FE1BC4129C68B /* TenThousandHours */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2AF098A34BF47348F177590 /* Build configuration list for PBXNativeTarget "TenThousandHours" */;
+			buildPhases = (
+				6FFAC9B779A4C872C9111401 /* Sources */,
+				776B1777304CF2F76B49D33D /* Frameworks */,
+				4F73C655CDB1AACC4011B4B7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B746BB0B3126721B0F765371 /* TenThousandHours */,
+			);
+			name = TenThousandHours;
+			productName = TenThousandHours;
+			productReference = 41F718CE1EB6C28F1162102F /* TenThousandHours.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F91CB4369807470B72980900 /* TenThousandHoursTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0B69166C9C97D49A2190585C /* Build configuration list for PBXNativeTarget "TenThousandHoursTests" */;
+			buildPhases = (
+				68F6191ED8AA60C61C6C9F62 /* Sources */,
+				46BDCE06E85E2D4809BAD3ED /* Frameworks */,
+				D3B1C9B4F55E395167F215A3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2620D1EB086BA24063E37DC4 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A1EE1E140EAF7D160B76A05B /* TenThousandHoursTests */,
+			);
+			name = TenThousandHoursTests;
+			productName = TenThousandHoursTests;
+			productReference = 8E32C34B156E730802293BF7 /* TenThousandHoursTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E0DA69B2118211C4FEACB08A /* TenThousandHoursUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 331EBFD65C355A27891BC9F8 /* Build configuration list for PBXNativeTarget "TenThousandHoursUITests" */;
+			buildPhases = (
+				85C771A65F0ADE2F87DA1D5C /* Sources */,
+				C81D7FFC618C277713F27FFC /* Frameworks */,
+				FC05AEDFE1B2382983985EEB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				75E3DF4F03C519C7E7442CBB /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4B9002686642FC1F39FF5B43 /* TenThousandHoursUITests */,
+			);
+			name = TenThousandHoursUITests;
+			productName = TenThousandHoursUITests;
+			productReference = A53C8477D42A4DBFA03627D5 /* TenThousandHoursUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E1583F5B81897FB3D2C73179 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2630;
+				LastUpgradeCheck = 2630;
+				TargetAttributes = {
+					4E3AA433EB6FE1BC4129C68B = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					F91CB4369807470B72980900 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 4E3AA433EB6FE1BC4129C68B;
+					};
+					E0DA69B2118211C4FEACB08A = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 4E3AA433EB6FE1BC4129C68B;
+					};
+				};
+			};
+			buildConfigurationList = E857CE27DEBF5AD1633F8920 /* Build configuration list for PBXProject "Ten-thousand-hours" */;
+			developmentRegion = ru;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				ru,
+				Base,
+			);
+			mainGroup = 1071DE64471030E0D41CFCC6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9DFBC2034F7A87886A88C42B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4E3AA433EB6FE1BC4129C68B /* TenThousandHours */,
+				F91CB4369807470B72980900 /* TenThousandHoursTests */,
+				E0DA69B2118211C4FEACB08A /* TenThousandHoursUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4F73C655CDB1AACC4011B4B7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D3B1C9B4F55E395167F215A3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FC05AEDFE1B2382983985EEB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6FFAC9B779A4C872C9111401 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		68F6191ED8AA60C61C6C9F62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		85C771A65F0ADE2F87DA1D5C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2620D1EB086BA24063E37DC4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4E3AA433EB6FE1BC4129C68B /* TenThousandHours */;
+			targetProxy = 83291784AF7842D208ED50EF /* PBXContainerItemProxy */;
+		};
+		75E3DF4F03C519C7E7442CBB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4E3AA433EB6FE1BC4129C68B /* TenThousandHours */;
+			targetProxy = B18F20C17AEF74A7E3105E2C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		62943C298CB6BC13F9B99B04 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D74B704A36CBA47EDD3F2B6A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AA0AB59AC58C262A16E6BC9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CY87MBJTCB;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "10 000 Hours";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irklch.TenThousandHours;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Debug;
+		};
+		F035F0CE30EA0DB0A76EAB4C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CY87MBJTCB;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "10 000 Hours";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irklch.TenThousandHours;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Release;
+		};
+		6BA6E5C612C6223BF49405FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CY87MBJTCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irklch.TenThousandHoursTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TenThousandHours.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TenThousandHours";
+			};
+			name = Debug;
+		};
+		9B085E937FF36376600895F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CY87MBJTCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irklch.TenThousandHoursTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TenThousandHours.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TenThousandHours";
+			};
+			name = Release;
+		};
+		47C8D2FA2E43B9795CDC4FDC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CY87MBJTCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irklch.TenThousandHoursUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				TEST_TARGET_NAME = TenThousandHours;
+			};
+			name = Debug;
+		};
+		98504F25C1C007CB10E745F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CY87MBJTCB;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irklch.TenThousandHoursUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				TEST_TARGET_NAME = TenThousandHours;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E857CE27DEBF5AD1633F8920 /* Build configuration list for PBXProject "Ten-thousand-hours" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				62943C298CB6BC13F9B99B04 /* Debug */,
+				D74B704A36CBA47EDD3F2B6A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2AF098A34BF47348F177590 /* Build configuration list for PBXNativeTarget "TenThousandHours" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0AB59AC58C262A16E6BC9A /* Debug */,
+				F035F0CE30EA0DB0A76EAB4C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0B69166C9C97D49A2190585C /* Build configuration list for PBXNativeTarget "TenThousandHoursTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6BA6E5C612C6223BF49405FF /* Debug */,
+				9B085E937FF36376600895F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		331EBFD65C355A27891BC9F8 /* Build configuration list for PBXNativeTarget "TenThousandHoursUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				47C8D2FA2E43B9795CDC4FDC /* Debug */,
+				98504F25C1C007CB10E745F1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E1583F5B81897FB3D2C73179 /* Project object */;
+}
