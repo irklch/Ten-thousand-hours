@@ -35,9 +35,31 @@ jobs:
             -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Select oldest simulator
+        run: |
+          oldest_id=$(./scripts/ci-simulator-id.sh oldest)
+          if [[ "$oldest_id" == "$SIMULATOR_ID" ]]; then
+            echo "::notice::Only one iOS runtime is available; skipping the oldest-runtime unit tests"
+          fi
+          echo "OLDEST_SIMULATOR_ID=$oldest_id" >> "$GITHUB_ENV"
+
+      - name: Unit tests on oldest iOS runtime
+        if: env.OLDEST_SIMULATOR_ID != env.SIMULATOR_ID
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Ten-thousand-hours.xcodeproj \
+            -scheme TenThousandHours \
+            -destination "id=$OLDEST_SIMULATOR_ID" \
+            -only-testing:TenThousandHoursTests \
+            -resultBundlePath OldestTestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: TestResults
-          path: TestResults.xcresult
+          path: |
+            TestResults.xcresult
+            OldestTestResults.xcresult

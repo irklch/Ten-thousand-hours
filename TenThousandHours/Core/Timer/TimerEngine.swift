@@ -27,6 +27,8 @@ final class TimerEngine {
         self.now = now
     }
 
+    nonisolated deinit {}
+
     func restore() throws {
         state = Self.state(for: try repository.activeSession())
     }
