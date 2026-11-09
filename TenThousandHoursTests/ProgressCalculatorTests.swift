@@ -87,4 +87,11 @@ final class ProgressCalculatorTests: XCTestCase {
         XCTAssertEqual(ProgressFormatter.percent(progress(35_999_999)), "99,99%")
         XCTAssertEqual(ProgressFormatter.percent(progress(40_000_000)), "100,00%")
     }
+
+    func testHoursFormattingUsesThousandsSeparatorAndWholeHours() {
+        XCTAssertEqual(ProgressFormatter.hours(progress(0)), "0 / 10\u{00A0}000 ч")
+        XCTAssertEqual(ProgressFormatter.hours(progress(3_599)), "0 / 10\u{00A0}000 ч")
+        XCTAssertEqual(ProgressFormatter.hours(progress(1_245 * 3_600 + 3_599)), "1\u{00A0}245 / 10\u{00A0}000 ч")
+        XCTAssertEqual(ProgressFormatter.hours(progress(40_000_000)), "11\u{00A0}111 / 10\u{00A0}000 ч")
+    }
 }

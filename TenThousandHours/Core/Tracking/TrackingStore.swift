@@ -16,12 +16,16 @@ final class TrackingStore {
 
     @ObservationIgnored private let engine: TimerEngine
     @ObservationIgnored private let repository: any SessionRepository
+    @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
 
     init(repository: any SessionRepository, now: @escaping () -> Date = Date.init) {
         self.repository = repository
+        self.now = now
         self.engine = TimerEngine(repository: repository, now: now)
     }
+
+    nonisolated deinit {}
 
     func restore() {
         perform {
@@ -56,11 +60,11 @@ final class TrackingStore {
         error = nil
     }
 
-    func keepRefreshing(interval: Duration = .seconds(1)) async {
+    func keepRefreshing() async {
         while !Task.isCancelled {
             refresh()
             do {
-                try await Task.sleep(for: interval)
+                try await Task.sleep(for: delayUntilNextSecond())
             } catch is CancellationError {
                 return
             } catch {
@@ -68,6 +72,12 @@ final class TrackingStore {
                 return
             }
         }
+    }
+
+    private func delayUntilNextSecond() -> Duration {
+        let fraction = now().timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1)
+        let delay = fraction >= 0 ? 1 - fraction : -fraction
+        return .milliseconds(Int(delay * 1_000) + 10)
     }
 
     private func perform(_ operation: () throws -> Void) {

@@ -9,7 +9,7 @@ TenThousandHours/
 ├── App/                    точка входа, корневой TabView, список вкладок
 ├── Core/
 │   ├── Session/            SessionSnapshot (значение), SessionRules (минимум 60 с, секунды), SessionError
-│   ├── Timer/              TimerEngine — Play/Stop/restore по сохранённым timestamp
+│   ├── Timer/              TimerEngine — Play/Stop/restore по сохранённым timestamp; ElapsedTimeFormatter
 │   ├── Progress/           ProgressCalculator, ProgressGoal (10 000 ч), ProgressFormatter
 │   └── Tracking/           TrackingStore — @Observable состояние для HomeViewModel
 ├── DesignSystem/           цвета, типографика, отступы и радиусы
@@ -19,7 +19,8 @@ TenThousandHours/
 │   ├── Repositories/       SessionRepository (протокол) + SwiftDataSessionRepository
 │   └── Persistence/        ModelContainerFactory — единая точка создания SwiftData-контейнера
 ├── Features/
-│   ├── Home/               главный экран
+│   ├── Home/               HomeView (по Figma) + HomeViewModel (форматирование, действия)
+│   ├── Progress/           ProgressGrid — область точек (на этапе 4 заменяется полной сеткой)
 │   └── History/            история сессий
 ├── Localizable.xcstrings   строки (язык разработки — ru)
 └── Assets.xcassets
@@ -31,7 +32,7 @@ TenThousandHoursUITests/    UI-тест навигации по вкладкам
 
 | Папка | Этап | Что будет внутри |
 |---|---|---|
-| `Features/Progress` | 3 | полноэкранный просмотр 10 000 точек |
+| `Features/Progress` | 4 | полная сетка 10 000 точек, полноэкранный просмотр |
 | `Shared` | виджеты | контракты, общие для приложения и Widget Extension (снимок состояния таймера, идентификатор App Group) |
 
 ## Принципы
@@ -51,6 +52,14 @@ TenThousandHoursUITests/    UI-тест навигации по вкладкам
 - **Ошибки.** При ошибке `save()` контекст откатывается (`rollback()`), состояние движка не меняется, `TrackingStore.error` получает ошибку.
 - **Изменение системного времени** не отслеживается: если часы переведены назад, прошедшее время не становится отрицательным (Stop удалит такую сессию как короткую); перевод вперёд увеличит длительность.
 - **Прогресс.** `часы = totalSeconds / 3600`, `процент = totalSeconds / 36 000 000 × 100`; визуально ограничены 100 % и 10 000 точками, фактическое время не обрезается. Для UI процент выводится с двумя знаками без округления вверх (`ProgressFormatter`).
+
+## Главный экран (этап 3)
+
+- `HomeViewModel` — лёгкая структура над `TrackingStore`: только форматирование (`ElapsedTimeFormatter`, `ProgressFormatter`) и действия Play/Stop. Расчётов прогресса во View нет.
+- Таймер показывает длительность текущего запуска: `MM:SS`, с часа — `HH:MM:SS`, часы не сбрасываются после 24 и расширяются при необходимости.
+- Ежесекундное обновление запускается через `.task(id:)` только когда таймер работает, сцена активна и экран виден; смена состояния отменяет предыдущую задачу, поэтому параллельных циклов не бывает. Тики выравниваются по границе секунды. Источник времени по-прежнему — `TimerEngine`.
+- `ProgressGrid(filledDotCount:)` рисует столько рядов `ProgressDot`, сколько помещается в оставшееся пространство (шаг 13 pt, как в Figma), и не создаёт 10 000 View.
+- Для UI-тестов (только DEBUG) аргумент `-ui-testing` переключает хранилище на временный файл, `-ui-testing-reset` очищает его.
 
 ## Подготовка к расширениям
 

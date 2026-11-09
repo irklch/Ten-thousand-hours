@@ -37,4 +37,20 @@ nonisolated enum ProgressFormatter {
         let value = Double(hundredthsOfPercent) / 100
         return value.formatted(.number.precision(.fractionLength(2)).locale(locale)) + "%"
     }
+
+    static func hours(_ progress: ProgressSnapshot) -> String {
+        "\(grouped(progress.completedHours)) / \(grouped(ProgressGoal.targetHours)) ч"
+    }
+
+    private static func grouped(_ value: Int) -> String {
+        let digits = Array(String(max(0, value)))
+        var groups: [String] = []
+        var end = digits.count
+        while end > 0 {
+            let start = max(0, end - 3)
+            groups.insert(String(digits[start..<end]), at: 0)
+            end = start
+        }
+        return groups.joined(separator: "\u{00A0}")
+    }
 }

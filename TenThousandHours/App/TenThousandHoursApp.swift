@@ -9,7 +9,7 @@ struct TenThousandHoursApp: App {
     init() {
         let container: ModelContainer
         do {
-            container = try ModelContainerFactory.makeContainer()
+            container = try Self.makeModelContainer()
         } catch {
             fatalError("Не удалось создать хранилище SwiftData: \(error)")
         }
@@ -25,5 +25,14 @@ struct TenThousandHoursApp: App {
                 .environment(trackingStore)
         }
         .modelContainer(modelContainer)
+    }
+
+    private static func makeModelContainer() throws -> ModelContainer {
+        #if DEBUG
+        if let storeURL = try UITestingStore.storeURLIfRequested() {
+            return try ModelContainerFactory.makeContainer(storeURL: storeURL)
+        }
+        #endif
+        return try ModelContainerFactory.makeContainer()
     }
 }

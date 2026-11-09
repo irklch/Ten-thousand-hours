@@ -15,6 +15,8 @@ final class Session {
         self.durationSeconds = nil
     }
 
+    nonisolated deinit {}
+
     var snapshot: SessionSnapshot {
         SessionSnapshot(id: id, startDate: startDate, endDate: endDate, durationSeconds: durationSeconds)
     }

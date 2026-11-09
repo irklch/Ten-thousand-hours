@@ -8,6 +8,8 @@ final class SwiftDataSessionRepository: SessionRepository {
         self.context = context
     }
 
+    nonisolated deinit {}
+
     func activeSession() throws -> SessionSnapshot? {
         try fetchActiveSession()?.snapshot
     }

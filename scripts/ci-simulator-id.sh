@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Usage: ci-simulator-id.sh [newest|oldest]
+# newest: newest iOS runtime not newer than the SDK; oldest: oldest runtime >= deployment target.
+mode="${1:-newest}"
 sdk_version=$(xcrun --sdk iphonesimulator --show-sdk-version)
 
-xcrun simctl list --json | SDK_VERSION="$sdk_version" python3 -c '
+xcrun simctl list --json | SDK_VERSION="$sdk_version" MODE="$mode" python3 -c '
 import json, os, subprocess, sys
 
 def version(text):
@@ -18,7 +21,13 @@ runtimes = [
 ]
 if not runtimes:
     sys.exit("No available iOS simulator runtime for SDK " + sdk_text)
-runtime = max(runtimes, key=lambda runtime: version(runtime["version"]))
+if os.environ["MODE"] == "oldest":
+    runtimes = [runtime for runtime in runtimes if version(runtime["version"]) >= [17, 0]]
+    if not runtimes:
+        sys.exit("No available iOS 17+ simulator runtime")
+    runtime = min(runtimes, key=lambda runtime: version(runtime["version"]))
+else:
+    runtime = max(runtimes, key=lambda runtime: version(runtime["version"]))
 
 for device in data["devices"].get(runtime["identifier"], []):
     if device["isAvailable"] and device["name"].startswith("iPhone"):
