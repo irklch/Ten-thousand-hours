@@ -116,4 +116,40 @@ final class TrackingStoreTests: XCTestCase {
         store.dismissError()
         XCTAssertNil(store.error)
     }
+
+    @MainActor
+    func testSeveralRefreshClientsShareOneTicker() async throws {
+        let storage = try TestStorage.inMemory()
+        let store = TrackingStore(repository: storage.repository, now: TestClock().provider())
+        XCTAssertFalse(store.isTicking)
+
+        let home = Task { await store.keepRefreshing() }
+        let fullscreen = Task { await store.keepRefreshing() }
+        for _ in 0..<5 { await Task.yield() }
+        XCTAssertTrue(store.isTicking)
+
+        home.cancel()
+        await home.value
+        XCTAssertTrue(store.isTicking)
+
+        fullscreen.cancel()
+        await fullscreen.value
+        XCTAssertFalse(store.isTicking)
+    }
+
+    @MainActor
+    func testNewFullHourFillsNextDotWhileRunning() throws {
+        let storage = try TestStorage.inMemory()
+        let clock = TestClock()
+        let store = TrackingStore(repository: storage.repository, now: clock.provider())
+        store.start()
+
+        clock.advance(by: 3_599)
+        store.refresh()
+        XCTAssertEqual(store.progress.filledDotCount, 0)
+
+        clock.advance(by: 1)
+        store.refresh()
+        XCTAssertEqual(store.progress.filledDotCount, 1)
+    }
 }

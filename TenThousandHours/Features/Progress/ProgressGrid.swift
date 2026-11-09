@@ -2,49 +2,56 @@ import SwiftUI
 
 struct ProgressGrid: View {
     let filledDotCount: Int
+    var accessibilitySummary: String = ""
+    let onOpen: () -> Void
 
-    private let minimumSpacing: CGFloat = 5
+    @State private var scrollState = ProgressGridScrollState()
 
     var body: some View {
         GeometryReader { proxy in
-            let layout = GridLayout(size: proxy.size, dotSize: ProgressDot.diameter, minimumSpacing: minimumSpacing)
-            VStack(alignment: .leading, spacing: layout.spacing) {
-                ForEach(0..<layout.rows, id: \.self) { row in
-                    HStack(spacing: layout.spacing) {
-                        ForEach(0..<layout.columns, id: \.self) { column in
-                            ProgressDot(isActive: row * layout.columns + column < filledDotCount)
-                        }
-                    }
+            let layout = ProgressGridLayout(availableWidth: proxy.size.width, style: .home)
+            ScrollViewReader { reader in
+                ScrollView(.vertical) {
+                    ProgressGridRows(layout: layout, filledDotCount: filledDotCount)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .scrollIndicators(.hidden)
+                .clipped()
+                .onAppear {
+                    scrollToProgressIfNeeded(layout: layout, size: proxy.size, reader: reader)
+                }
+                .onChange(of: layout) { _, newLayout in
+                    scrollToProgressIfNeeded(layout: newLayout, size: proxy.size, reader: reader)
                 }
             }
         }
-        .clipped()
-        .accessibilityHidden(true)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onOpen)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: accessibilitySummary))
+        .accessibilityHint(Text("Открывает полноэкранный прогресс"))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { onOpen() }
+        .accessibilityIdentifier("home.progressGrid")
     }
-}
 
-private struct GridLayout {
-    let columns: Int
-    let rows: Int
-    let spacing: CGFloat
-
-    init(size: CGSize, dotSize: CGFloat, minimumSpacing: CGFloat) {
-        let pitch = dotSize + minimumSpacing
-        let columns = max(1, Int((size.width + minimumSpacing) / pitch))
-        let spacing = columns > 1
-            ? (size.width - CGFloat(columns) * dotSize) / CGFloat(columns - 1)
-            : minimumSpacing
-        let rowLimit = Int((size.height + spacing) / (dotSize + spacing))
-        let neededRows = (ProgressGoal.targetHours + columns - 1) / columns
-
-        self.columns = columns
-        self.rows = max(0, min(rowLimit, neededRows))
-        self.spacing = spacing
+    private func scrollToProgressIfNeeded(layout: ProgressGridLayout, size: CGSize, reader: ScrollViewProxy) {
+        guard size.width > 0,
+              let target = scrollState.targetIfNeeded(
+                  filledDotCount: filledDotCount,
+                  layout: layout,
+                  viewportHeight: size.height
+              )
+        else { return }
+        guard !target.isContentStart else { return }
+        Task { @MainActor in
+            reader.scrollTo(target.row, anchor: target.anchor.unitPoint)
+        }
     }
 }
 
 #Preview {
-    ProgressGrid(filledDotCount: 113)
-        .frame(width: 346, height: 333)
+    ProgressGrid(filledDotCount: 2_450) {}
+        .frame(width: 346, height: 339)
         .padding()
 }

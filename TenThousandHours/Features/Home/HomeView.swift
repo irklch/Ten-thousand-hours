@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(TrackingStore.self) private var store
     @Environment(\.scenePhase) private var scenePhase
+    @State private var isFullscreenProgressPresented = false
 
     var body: some View {
         let viewModel = HomeViewModel(store: store)
@@ -10,8 +11,13 @@ struct HomeView: View {
         VStack(spacing: 0) {
             timerSection(viewModel)
             progressHeader(viewModel)
-            ProgressGrid(filledDotCount: viewModel.filledDotCount)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            ProgressGrid(
+                filledDotCount: viewModel.filledDotCount,
+                accessibilitySummary: viewModel.progress.accessibilitySummary
+            ) {
+                isFullscreenProgressPresented = true
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(.horizontal, AppSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -19,6 +25,10 @@ struct HomeView: View {
         .task(id: RefreshTrigger(isRunning: viewModel.isRunning, isActive: scenePhase == .active)) {
             guard viewModel.isRunning, scenePhase == .active else { return }
             await viewModel.keepTimerUpdated()
+        }
+        .fullScreenCover(isPresented: $isFullscreenProgressPresented) {
+            FullscreenProgressView()
+                .environment(store)
         }
         .alert(
             "Ошибка",
