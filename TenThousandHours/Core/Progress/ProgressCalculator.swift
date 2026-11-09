@@ -42,6 +42,12 @@ nonisolated enum ProgressFormatter {
         "\(grouped(progress.completedHours)) / \(grouped(ProgressGoal.targetHours)) ч"
     }
 
+    static func accessibilitySummary(_ progress: ProgressSnapshot) -> String {
+        let hours = grouped(progress.completedHours)
+        let goal = grouped(ProgressGoal.targetHours)
+        return String(localized: "Прогресс: \(percent(progress)). Завершено часов: \(hours) из \(goal)")
+    }
+
     private static func grouped(_ value: Int) -> String {
         let digits = Array(String(max(0, value)))
         var groups: [String] = []

@@ -14,9 +14,17 @@ struct TenThousandHoursApp: App {
             fatalError("Не удалось создать хранилище SwiftData: \(error)")
         }
         modelContainer = container
-        _trackingStore = State(
-            initialValue: TrackingStore(repository: SwiftDataSessionRepository(context: container.mainContext))
-        )
+        let repository = SwiftDataSessionRepository(context: container.mainContext)
+        #if DEBUG
+        do {
+            try UITestingStore.seedIfRequested(repository: repository)
+        } catch {
+            fatalError("Не удалось подготовить данные UI-тестов: \(error)")
+        }
+        #endif
+        let store = TrackingStore(repository: repository)
+        store.restore()
+        _trackingStore = State(initialValue: store)
     }
 
     var body: some Scene {
