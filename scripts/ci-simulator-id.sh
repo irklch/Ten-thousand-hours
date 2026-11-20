@@ -30,7 +30,7 @@ else:
     runtime = max(runtimes, key=lambda runtime: version(runtime["version"]))
 
 for device in data["devices"].get(runtime["identifier"], []):
-    if device["isAvailable"] and device["name"].startswith("iPhone"):
+    if device["isAvailable"] and "iPhone" in device["name"]:
         print(device["udid"])
         sys.exit(0)
 

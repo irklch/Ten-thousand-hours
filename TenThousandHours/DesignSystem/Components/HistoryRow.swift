@@ -3,14 +3,15 @@ import SwiftUI
 struct HistoryRow: View {
     let duration: String
     let date: String
+    var accessibilityLabel: String?
 
     var body: some View {
         HStack(spacing: AppSpacing.medium) {
             VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
-                Text(duration)
+                Text(verbatim: duration)
                     .appTextStyle(.progress)
                     .foregroundStyle(AppColor.primaryText)
-                Text(date)
+                Text(verbatim: date)
                     .appTextStyle(.caption)
                     .foregroundStyle(AppColor.secondaryText)
             }
@@ -30,7 +31,9 @@ struct HistoryRow: View {
         }
         .padding(.leading, AppSpacing.large)
         .background(AppColor.background)
-        .accessibilityElement(children: .combine)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: accessibilityLabel ?? "\(duration), \(date)"))
     }
 }
 

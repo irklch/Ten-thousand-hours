@@ -51,6 +51,7 @@ final class FailingSessionRepository: SessionRepository {
         case finish
         case delete
         case total
+        case update
     }
 
     var failingOperations: Set<Operation> = []
@@ -89,7 +90,8 @@ final class FailingSessionRepository: SessionRepository {
     }
 
     func updateDuration(ofSessionWithID id: UUID, to durationSeconds: Int) throws -> SessionSnapshot {
-        try wrapped.updateDuration(ofSessionWithID: id, to: durationSeconds)
+        try failIfNeeded(.update)
+        return try wrapped.updateDuration(ofSessionWithID: id, to: durationSeconds)
     }
 
     private func failIfNeeded(_ operation: Operation) throws {

@@ -8,7 +8,7 @@
 TenThousandHours/
 ├── App/                    точка входа, корневой TabView, список вкладок
 ├── Core/
-│   ├── Session/            SessionSnapshot (значение), SessionRules (минимум 60 с, секунды), SessionError
+│   ├── Session/            SessionSnapshot, SessionRules, SessionError, SessionDuration/DateFormatter, SessionDurationInput
 │   ├── Timer/              TimerEngine — Play/Stop/restore по сохранённым timestamp; ElapsedTimeFormatter
 │   ├── Progress/           ProgressCalculator, ProgressGoal (10 000 ч), ProgressFormatter
 │   └── Tracking/           TrackingStore — @Observable состояние для HomeViewModel
@@ -21,7 +21,7 @@ TenThousandHours/
 ├── Features/
 │   ├── Home/               HomeView (по Figma) + HomeViewModel (форматирование, действия)
 │   ├── Progress/           сетка 10 000 точек (геометрия, позиционирование, отрисовка), FullscreenProgressView
-│   └── History/            история сессий
+│   └── History/            HistoryView/ViewModel, EditSessionDurationView/ViewModel
 ├── Localizable.xcstrings   строки (язык разработки — ru)
 └── Assets.xcassets
 TenThousandHoursTests/      unit-тесты (XCTest)
@@ -68,6 +68,12 @@ TenThousandHoursUITests/    UI-тест навигации по вкладкам
 - Tap/drag: `onTapGesture` на области сетки; системный pan ScrollView забирает вертикальный drag, поэтому drag прокручивает, а короткое нажатие открывает `fullScreenCover`.
 - Обновление: `TrackingStore.keepRefreshing()` подсчитывает клиентов и держит один общий тикер, поэтому главная и полноэкранный экран не создают два цикла.
 - Accessibility: сетка — один элемент со сводкой «Прогресс: 12,45%. Завершено часов: 1 245 из 10 000».
+
+## История и редактирование (этап 5)
+
+- `HistoryViewModel` получает завершённые сессии через `TrackingStore.completedSessions()` (без прямого SwiftData во View), сортировка — от новых к старым по `startDate`, активная сессия не показывается. Длительность берётся из `durationSeconds` и форматируется `SessionDurationFormatter` (полные часы и минуты, без округления вверх), дата начала — `SessionDateFormatter` (русская локаль, часовой пояс устройства).
+- История перезагружается по `TrackingStore.sessionsRevision`, который меняется только при изменении данных (restore, Stop, редактирование), а не каждую секунду.
+- Редактирование: нативный sheet с `Form` и двумя полями. `SessionDurationInput` валидирует ввод (целые неотрицательные часы, минуты 0–59, ≥ 1 минуты, защита от переполнения Int). Сохранение — `TrackingStore.updateDuration` → `SessionRepository.updateDuration` (меняется только `durationSeconds`; остаточные секунды обнуляются только при явном сохранении) → `reloadProgress()` пересчитывает общий прогресс, поэтому главная, сетка и полноэкранный экран обновляются сразу, а активная сессия продолжает идти.
 
 ## Подготовка к расширениям
 
