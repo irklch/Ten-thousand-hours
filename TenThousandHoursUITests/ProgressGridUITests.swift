@@ -26,6 +26,27 @@ final class ProgressGridUITests: XCTestCase {
         app.buttons["Закрыть"]
     }
 
+    /// Открывает полноэкранный прогресс. Пока таймер идёт, главная перерисовывается каждую секунду,
+    /// и на медленном симуляторе CI первое нажатие может прийтись на смену кадра — тогда повторяем его.
+    /// Что одно нажатие открывает экран, проверяет `testTapOnGridOpensFullscreenWithoutTabBarAndCloseReturns`.
+    @MainActor
+    private func openFullscreen(in app: XCUIApplication) {
+        let grid = grid(in: app)
+        let close = closeButton(in: app)
+        XCTAssertTrue(grid.waitForExistence(timeout: 10))
+        XCTAssertTrue(
+            XCTWaiter().wait(
+                for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: grid)],
+                timeout: 10
+            ) == .completed
+        )
+        grid.tap()
+        if !close.waitForExistence(timeout: 5) {
+            grid.tap()
+        }
+        XCTAssertTrue(close.waitForExistence(timeout: 10), "Полноэкранный прогресс не открылся")
+    }
+
     @MainActor
     func testTapOnGridOpensFullscreenWithoutTabBarAndCloseReturns() {
         let app = launchApp()
@@ -83,8 +104,7 @@ final class ProgressGridUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Остановить"].waitForExistence(timeout: 5))
         let valueBeforeOpening = timer.value as? String
 
-        grid(in: app).tap()
-        XCTAssertTrue(closeButton(in: app).waitForExistence(timeout: 5))
+        openFullscreen(in: app)
         sleep(3)
         closeButton(in: app).tap()
 

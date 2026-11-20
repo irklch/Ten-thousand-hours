@@ -8,6 +8,7 @@ final class TrackingStore {
     private(set) var progress = ProgressCalculator.progress(completedSessionsSeconds: 0, activeSessionSeconds: 0)
     private(set) var isProcessing = false
     private(set) var error: (any Error)?
+    private(set) var sessionsRevision = 0
 
     var totalSeconds: Int { progress.totalSeconds }
     var completedHours: Int { progress.completedHours }
@@ -33,6 +34,7 @@ final class TrackingStore {
         perform {
             try engine.restore()
             completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
+            sessionsRevision += 1
         }
     }
 
@@ -46,7 +48,29 @@ final class TrackingStore {
         perform {
             try engine.stop()
             completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
+            sessionsRevision += 1
         }
+    }
+
+    func completedSessions() throws -> [SessionSnapshot] {
+        try repository.completedSessions()
+    }
+
+    @discardableResult
+    func updateDuration(ofSessionWithID id: UUID, to durationSeconds: Int) throws -> SessionSnapshot {
+        let updated = try repository.updateDuration(ofSessionWithID: id, to: durationSeconds)
+        reloadProgress()
+        return updated
+    }
+
+    func reloadProgress() {
+        do {
+            completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
+        } catch {
+            self.error = error
+        }
+        sessionsRevision += 1
+        refresh()
     }
 
     func refresh() {
