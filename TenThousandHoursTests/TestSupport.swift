@@ -107,3 +107,51 @@ func makeTemporaryStoreURL() throws -> URL {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory.appendingPathComponent("Sessions.store")
 }
+
+func makeTemporaryDirectory() throws -> URL {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("TenThousandHoursTests-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    return directory
+}
+
+/// The shared store as the app and the widget see it. Each "process" gets its own `ModelContainer`
+/// and its own `FileLockCoordinator` on a shared lock file, just like the two real processes.
+@MainActor
+struct SharedStoreFixture {
+    let location: SharedStoreLocation
+
+    init(migrated: Bool = true) throws {
+        location = SharedStoreLocation(directory: try makeTemporaryDirectory())
+        if migrated {
+            try Data("1".utf8).write(to: location.migrationMarkerURL)
+        }
+    }
+
+    /// A separate "process": its own container on the same file.
+    func process(now: @escaping () -> Date) throws -> TrackingCommands {
+        TrackingCommands(
+            repository: SwiftDataSessionRepository(
+                container: try ModelContainerFactory.makeContainer(storeURL: location.storeURL)
+            ),
+            coordinator: FileLockCoordinator(lockFileURL: location.lockFileURL),
+            now: now
+        )
+    }
+
+    func appStore(now: @escaping () -> Date, onSessionsChanged: @escaping () -> Void = {}) throws -> TrackingStore {
+        TrackingStore(
+            repository: SwiftDataSessionRepository(
+                container: try ModelContainerFactory.makeContainer(storeURL: location.storeURL)
+            ),
+            coordinator: FileLockCoordinator(lockFileURL: location.lockFileURL),
+            onSessionsChanged: onSessionsChanged,
+            now: now
+        )
+    }
+
+    func allSessions() throws -> [SessionSnapshot] {
+        let container = try ModelContainerFactory.makeContainer(storeURL: location.storeURL)
+        return try ModelContext(container).fetch(FetchDescriptor<Session>()).map(\.snapshot)
+    }
+}

@@ -25,6 +25,16 @@ jobs:
           echo "Using simulator $simulator_id"
           echo "SIMULATOR_ID=$simulator_id" >> "$GITHUB_ENV"
 
+      - name: Build widget extension (Release)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Ten-thousand-hours.xcodeproj \
+            -target TenThousandHoursWidgets \
+            -configuration Release \
+            -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO
+
       - name: Build and test
         run: |
           set -o pipefail

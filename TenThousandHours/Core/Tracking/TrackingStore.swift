@@ -9,6 +9,8 @@ final class TrackingStore {
     private(set) var isProcessing = false
     private(set) var error: (any Error)?
     private(set) var sessionsRevision = 0
+    /// A storage problem found at launch. Unlike `error`, it is not cleared by the next successful operation.
+    private(set) var storageNotice: (any Error)?
 
     var totalSeconds: Int { progress.totalSeconds }
     var completedHours: Int { progress.completedHours }
@@ -17,15 +19,28 @@ final class TrackingStore {
 
     @ObservationIgnored private let engine: TimerEngine
     @ObservationIgnored private let repository: any SessionRepository
+    @ObservationIgnored private let coordinator: any SessionOperationCoordinator
+    @ObservationIgnored private let onSessionsChanged: () -> Void
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
     @ObservationIgnored private var refreshClientCount = 0
     @ObservationIgnored private var tickerTask: Task<Void, Never>?
 
-    init(repository: any SessionRepository, now: @escaping () -> Date = Date.init) {
+    /// - Parameters:
+    ///   - coordinator: the same cross-process lock the widget uses (`FileLockCoordinator`).
+    ///   - onSessionsChanged: called after Play, Stop and a duration edit are saved successfully
+    ///     (in the app this reloads the widget timeline).
+    init(
+        repository: any SessionRepository,
+        coordinator: any SessionOperationCoordinator = InProcessOperationCoordinator(),
+        onSessionsChanged: @escaping () -> Void = {},
+        now: @escaping () -> Date = Date.init
+    ) {
         self.repository = repository
+        self.coordinator = coordinator
+        self.onSessionsChanged = onSessionsChanged
         self.now = now
-        self.engine = TimerEngine(repository: repository, now: now)
+        self.engine = TimerEngine(repository: repository, coordinator: coordinator, now: now)
     }
 
     nonisolated deinit {}
@@ -38,17 +53,26 @@ final class TrackingStore {
         }
     }
 
+    /// Re-reads the state from the store before acting: the session may already have been started or
+    /// stopped from the widget, and the memory state alone is not trusted.
     func start() {
         perform {
-            try engine.start()
+            let result = try engine.start()
+            if case .started = result {
+                onSessionsChanged()
+            }
+            completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
         }
     }
 
     func stop() {
         perform {
-            try engine.stop()
+            let result = try engine.stop()
             completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
             sessionsRevision += 1
+            if result != .notRunning {
+                onSessionsChanged()
+            }
         }
     }
 
@@ -58,8 +82,11 @@ final class TrackingStore {
 
     @discardableResult
     func updateDuration(ofSessionWithID id: UUID, to durationSeconds: Int) throws -> SessionSnapshot {
-        let updated = try repository.updateDuration(ofSessionWithID: id, to: durationSeconds)
+        let updated = try coordinator.perform {
+            try repository.updateDuration(ofSessionWithID: id, to: durationSeconds)
+        }
         reloadProgress()
+        onSessionsChanged()
         return updated
     }
 
@@ -82,8 +109,14 @@ final class TrackingStore {
         )
     }
 
+    /// Shows a storage problem found at launch (for example, the shared store is unavailable).
+    func reportStorageNotice(_ error: any Error) {
+        storageNotice = error
+    }
+
     func dismissError() {
         error = nil
+        storageNotice = nil
     }
 
     func keepRefreshing() async {

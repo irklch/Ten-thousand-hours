@@ -48,6 +48,24 @@ nonisolated enum ProgressFormatter {
         return String(localized: "Прогресс: \(percent(progress)). Завершено часов: \(hours) из \(goal)")
     }
 
+    /// «Выполнено 12,45 процента». A number with a fractional part takes the genitive singular.
+    static func spokenPercent(_ progress: ProgressSnapshot) -> String {
+        let value = String(percent(progress).dropLast())
+        return String(localized: "Выполнено \(value) процента")
+    }
+
+    /// «Накоплено 1 245 часов из 10 000».
+    static func spokenHours(_ progress: ProgressSnapshot) -> String {
+        let hours = progress.completedHours
+        let goal = grouped(ProgressGoal.targetHours)
+        let count = grouped(hours)
+        return switch RussianPlural.category(hours) {
+        case .one: String(localized: "Накоплен \(count) час из \(goal)")
+        case .few: String(localized: "Накоплено \(count) часа из \(goal)")
+        case .many: String(localized: "Накоплено \(count) часов из \(goal)")
+        }
+    }
+
     private static func grouped(_ value: Int) -> String {
         let digits = Array(String(max(0, value)))
         var groups: [String] = []
@@ -58,5 +76,25 @@ nonisolated enum ProgressFormatter {
             end = start
         }
         return groups.joined(separator: "\u{00A0}")
+    }
+}
+
+nonisolated enum RussianPlural {
+    enum Category: Equatable {
+        case one
+        case few
+        case many
+    }
+
+    static func category(_ value: Int) -> Category {
+        let number = abs(value)
+        let lastTwo = number % 100
+        let last = number % 10
+        if (11...14).contains(lastTwo) { return .many }
+        switch last {
+        case 1: return .one
+        case 2...4: return .few
+        default: return .many
+        }
     }
 }
