@@ -13,9 +13,12 @@ struct HomeViewModel {
     var filledDotCount: Int { progress.filledDotCount }
 
     var errorMessage: String? {
-        guard let error = store.error else { return nil }
+        guard let error = store.error ?? store.storageNotice else { return nil }
         if let sessionError = error as? SessionError {
             return sessionError.errorDescription
+        }
+        if let storeError = error as? SharedStoreError {
+            return storeError.errorDescription
         }
         return String(localized: "Не удалось сохранить данные. Попробуйте ещё раз.")
     }

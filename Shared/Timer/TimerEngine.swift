@@ -20,10 +20,19 @@ final class TimerEngine {
     private(set) var state: State = .idle
 
     private let repository: any SessionRepository
+    private let coordinator: any SessionOperationCoordinator
     private let now: () -> Date
 
-    init(repository: any SessionRepository, now: @escaping () -> Date = Date.init) {
+    /// `coordinator` serializes Play/Stop across processes (the app and the widget). The check
+    /// "is there an active session" and the write that follows it run under a single lock, so two
+    /// simultaneous Plays cannot create two active sessions, and two Stops cannot finish one session twice.
+    init(
+        repository: any SessionRepository,
+        coordinator: any SessionOperationCoordinator = InProcessOperationCoordinator(),
+        now: @escaping () -> Date = Date.init
+    ) {
         self.repository = repository
+        self.coordinator = coordinator
         self.now = now
     }
 
@@ -35,6 +44,15 @@ final class TimerEngine {
 
     @discardableResult
     func start() throws -> StartResult {
+        try coordinator.perform(startLocked)
+    }
+
+    @discardableResult
+    func stop() throws -> StopResult {
+        try coordinator.perform(stopLocked)
+    }
+
+    private func startLocked() throws -> StartResult {
         if let active = try repository.activeSession() {
             state = .running(startDate: active.startDate)
             return .alreadyRunning(active)
@@ -44,8 +62,7 @@ final class TimerEngine {
         return .started(created)
     }
 
-    @discardableResult
-    func stop() throws -> StopResult {
+    private func stopLocked() throws -> StopResult {
         guard let active = try repository.activeSession() else {
             state = .idle
             return .notRunning
