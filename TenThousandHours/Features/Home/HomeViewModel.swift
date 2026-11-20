@@ -7,9 +7,10 @@ struct HomeViewModel {
     var isProcessing: Bool { store.isProcessing }
     var timerText: String { ElapsedTimeFormatter.clock(store.currentSessionElapsedSeconds) }
     var timerAccessibilityValue: String { ElapsedTimeFormatter.spoken(store.currentSessionElapsedSeconds) }
-    var percentText: String { ProgressFormatter.percent(store.progress) }
-    var hoursText: String { ProgressFormatter.hours(store.progress) }
-    var filledDotCount: Int { store.progress.filledDotCount }
+    var progress: ProgressDisplay { ProgressDisplay(progress: store.progress) }
+    var percentText: String { progress.percentText }
+    var hoursText: String { progress.hoursText }
+    var filledDotCount: Int { progress.filledDotCount }
 
     var errorMessage: String? {
         guard let error = store.error else { return nil }

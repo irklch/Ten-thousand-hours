@@ -18,6 +18,8 @@ final class TrackingStore {
     @ObservationIgnored private let repository: any SessionRepository
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
+    @ObservationIgnored private var refreshClientCount = 0
+    @ObservationIgnored private var tickerTask: Task<Void, Never>?
 
     init(repository: any SessionRepository, now: @escaping () -> Date = Date.init) {
         self.repository = repository
@@ -61,10 +63,43 @@ final class TrackingStore {
     }
 
     func keepRefreshing() async {
+        refreshClientCount += 1
+        if refreshClientCount == 1 {
+            startTicker()
+        }
+        await waitUntilCancelled()
+        refreshClientCount -= 1
+        if refreshClientCount == 0 {
+            tickerTask?.cancel()
+            tickerTask = nil
+        }
+    }
+
+    var isTicking: Bool {
+        tickerTask != nil
+    }
+
+    private func startTicker() {
+        tickerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.refresh()
+                do {
+                    try await Task.sleep(for: self.delayUntilNextSecond())
+                } catch is CancellationError {
+                    return
+                } catch {
+                    self.error = error
+                    return
+                }
+            }
+        }
+    }
+
+    private func waitUntilCancelled() async {
         while !Task.isCancelled {
-            refresh()
             do {
-                try await Task.sleep(for: delayUntilNextSecond())
+                try await Task.sleep(for: .seconds(3_600))
             } catch is CancellationError {
                 return
             } catch {
