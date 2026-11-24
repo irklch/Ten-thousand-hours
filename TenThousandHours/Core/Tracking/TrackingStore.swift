@@ -24,6 +24,7 @@ final class TrackingStore {
     @ObservationIgnored private let lock: FileLockCoordinator?
     @ObservationIgnored private let onSessionsChanged: () -> Void
     @ObservationIgnored private let onStateRead: (TrackingSyncState) -> Void
+    @ObservationIgnored private let onTimerStarted: () -> Void
     @ObservationIgnored private let preferences: SharedPreferences
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
@@ -36,6 +37,8 @@ final class TrackingStore {
     ///     (в приложении перезагружает таймлайн виджета).
     ///   - onStateRead: вызывается с состоянием из хранилища после успешного восстановления, Play, Stop,
     ///     правки длительности и сброса (в приложении приводит в соответствие Live Activity и напоминания).
+    ///   - onTimerStarted: вызывается после Play в приложении, создавшего сессию (в приложении — запрос
+    ///     разрешения на напоминания).
     ///   - preferences: время последнего Play/Stop и флаг показанного поздравления (в приложении — App Group).
     init(
         repository: any SessionRepository,
@@ -43,6 +46,7 @@ final class TrackingStore {
         preferences: SharedPreferences = .ephemeral(),
         onSessionsChanged: @escaping () -> Void = {},
         onStateRead: @escaping (TrackingSyncState) -> Void = { _ in },
+        onTimerStarted: @escaping () -> Void = {},
         now: @escaping () -> Date = Date.init
     ) {
         self.repository = repository
@@ -50,6 +54,7 @@ final class TrackingStore {
         self.preferences = preferences
         self.onSessionsChanged = onSessionsChanged
         self.onStateRead = onStateRead
+        self.onTimerStarted = onTimerStarted
         self.now = now
         self.engine = TimerEngine(repository: repository, lock: lock, preferences: preferences, now: now)
     }
@@ -71,6 +76,7 @@ final class TrackingStore {
             let result = try engine.start()
             if case .started = result {
                 onSessionsChanged()
+                onTimerStarted()
             }
             try reloadStatus()
             try reportState()

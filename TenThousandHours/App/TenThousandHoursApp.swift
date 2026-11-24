@@ -69,13 +69,16 @@ extension TrackingStore {
             preferences: preferences,
             onSessionsChanged: WidgetTimelineReloader.reload,
             onStateRead: { state in
+                Task { await SharedTracking.syncSystemState(state) }
+            },
+            onTimerStarted: {
+                guard requestsNotificationPermission else { return }
+                // Разрешение на напоминания спрашиваем после Play: в этот момент понятно, зачем они нужны.
+                // Системный запрос показывается один раз; после ответа напоминания планируются заново
+                // (таймер только что запущен, значит идёт, а цель не завершена — иначе Play был бы отклонён).
                 Task {
-                    // Разрешение на напоминания спрашиваем, когда таймер идёт: в этот момент понятно, зачем они нужны.
-                    // Системный запрос показывается один раз; затем напоминания планируются с учётом ответа.
-                    if requestsNotificationPermission, state.activeSession != nil {
-                        await DailyReminderScheduler.requestAuthorizationIfNeeded()
-                    }
-                    await SharedTracking.syncSystemState(state)
+                    await DailyReminderScheduler.requestAuthorizationIfNeeded()
+                    await DailyReminderScheduler.reschedule(isRunning: true, isGoalCompleted: false)
                 }
             }
         )
