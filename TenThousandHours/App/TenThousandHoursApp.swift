@@ -43,6 +43,7 @@ struct TenThousandHoursApp: App {
             return try TrackingStore.open(
                 storeURL: storeURL,
                 preferences: .ephemeral(),
+                requestsNotificationPermission: false,
                 seed: { try UITestingStore.seedIfRequested(repository: $0) }
             )
         }
@@ -57,6 +58,7 @@ extension TrackingStore {
     static func open(
         storeURL: URL,
         preferences: SharedPreferences = .shared,
+        requestsNotificationPermission: Bool = true,
         seed: (any SessionRepository) throws -> Void = { _ in }
     ) throws -> TrackingStore {
         let repository = SwiftDataSessionRepository(container: try ModelContainerFactory.makeContainer(storeURL: storeURL))
@@ -67,7 +69,14 @@ extension TrackingStore {
             preferences: preferences,
             onSessionsChanged: WidgetTimelineReloader.reload,
             onStateRead: { state in
-                Task { await SharedTracking.syncSystemState(state) }
+                Task {
+                    // Разрешение на напоминания спрашиваем, когда таймер идёт: в этот момент понятно, зачем они нужны.
+                    // Системный запрос показывается один раз; затем напоминания планируются с учётом ответа.
+                    if requestsNotificationPermission, state.activeSession != nil {
+                        await DailyReminderScheduler.requestAuthorizationIfNeeded()
+                    }
+                    await SharedTracking.syncSystemState(state)
+                }
             }
         )
         store.restore()

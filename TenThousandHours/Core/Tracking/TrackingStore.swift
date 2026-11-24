@@ -108,8 +108,8 @@ final class TrackingStore {
         isCelebrationPending = false
     }
 
-    /// Повторно передаёт состояние наружу, например после того как пользователь разрешил уведомления.
-    func syncSystemState() {
+    /// Передаёт состояние наружу вне `perform` (после правки длительности).
+    private func syncSystemState() {
         do {
             try reportState()
         } catch {

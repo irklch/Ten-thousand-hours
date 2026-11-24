@@ -86,15 +86,13 @@ enum DailyReminderScheduler {
     }
 
     /// Системный запрос показывается один раз — пока пользователь не ответил. После отказа повторно не спрашиваем.
-    /// - Returns: `true`, если разрешение только что выдано и напоминания стоит перепланировать.
-    static func requestAuthorizationIfNeeded() async -> Bool {
+    static func requestAuthorizationIfNeeded() async {
         let center = UNUserNotificationCenter.current()
-        guard await center.notificationSettings().authorizationStatus == .notDetermined else { return false }
+        guard await center.notificationSettings().authorizationStatus == .notDetermined else { return }
         do {
-            return try await center.requestAuthorization(options: [.alert, .sound])
+            _ = try await center.requestAuthorization(options: [.alert, .sound])
         } catch {
             logger.error("Notification authorization failed: \(error.localizedDescription, privacy: .public)")
-            return false
         }
     }
 

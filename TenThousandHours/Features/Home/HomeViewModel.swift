@@ -31,7 +31,6 @@ struct HomeViewModel {
             store.stop()
         } else {
             store.start()
-            requestNotificationsIfNeeded()
         }
     }
 
@@ -39,16 +38,6 @@ struct HomeViewModel {
         store.resetProgress()
     }
 
-    /// Разрешение на напоминания спрашиваем после первого Play: в этот момент понятно, зачем они нужны.
-    private func requestNotificationsIfNeeded() {
-        guard store.isRunning else { return }
-        let store = store
-        Task {
-            if await DailyReminderScheduler.requestAuthorizationIfNeeded() {
-                store.syncSystemState()
-            }
-        }
-    }
 
     func dismissError() {
         store.dismissError()
