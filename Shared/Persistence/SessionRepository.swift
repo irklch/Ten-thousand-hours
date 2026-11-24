@@ -1,6 +1,6 @@
 import Foundation
 
-protocol SessionRepository {
+nonisolated protocol SessionRepository {
     func activeSession() throws -> SessionSnapshot?
     func createActiveSession(startDate: Date) throws -> SessionSnapshot
     func finishActiveSession(endDate: Date, durationSeconds: Int) throws -> SessionSnapshot

@@ -181,7 +181,6 @@ final class HomeViewModelTests: XCTestCase {
     }
 }
 
-@MainActor
 private final class DuplicateStartRepository: SessionRepository {
     private let wrapped: any SessionRepository
 

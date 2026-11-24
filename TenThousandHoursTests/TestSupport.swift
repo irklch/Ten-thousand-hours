@@ -44,7 +44,6 @@ struct TestStorage {
 
 struct InjectedSaveError: Error, Equatable {}
 
-@MainActor
 final class FailingSessionRepository: SessionRepository {
     enum Operation {
         case create
@@ -106,4 +105,51 @@ func makeTemporaryStoreURL() throws -> URL {
         .appendingPathComponent("TenThousandHoursTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory.appendingPathComponent("Sessions.store")
+}
+
+func makeTemporaryDirectory() throws -> URL {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("TenThousandHoursTests-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    return directory
+}
+
+/// A store file as the app and the widget see it. Each "participant" gets its own `ModelContainer`
+/// and its own `FileLockCoordinator` on the shared lock file. This is all inside one test process:
+/// it reproduces the separate containers and contexts, but it is not a test of real separate processes.
+nonisolated struct SharedStoreFixture: Sendable {
+    let storeURL: URL
+
+    init() throws {
+        storeURL = try makeTemporaryDirectory().appendingPathComponent("TenThousandHours.store")
+        // The store is created in advance, as the app does on first launch.
+        _ = try ModelContainerFactory.makeContainer(storeURL: storeURL)
+    }
+
+    var lock: FileLockCoordinator {
+        FileLockCoordinator(lockFileURL: ModelContainerFactory.lockFileURL(forStoreAt: storeURL))
+    }
+
+    /// A separate participant (widget, intent): its own container on the same file, the same `TimerEngine`.
+    func engine(now: @escaping () -> Date = Date.init) throws -> TimerEngine {
+        TimerEngine(repository: try repository(), lock: lock, now: now)
+    }
+
+    func status() throws -> TrackingStatus {
+        try TrackingStatus.read(from: try repository(), lock: lock)
+    }
+
+    func repository() throws -> SwiftDataSessionRepository {
+        SwiftDataSessionRepository(container: try ModelContainerFactory.makeContainer(storeURL: storeURL))
+    }
+
+    @MainActor
+    func appStore(now: @escaping () -> Date, onSessionsChanged: @escaping () -> Void = {}) throws -> TrackingStore {
+        TrackingStore(repository: try repository(), lock: lock, onSessionsChanged: onSessionsChanged, now: now)
+    }
+
+    func allSessions() throws -> [SessionSnapshot] {
+        let container = try ModelContainerFactory.makeContainer(storeURL: storeURL)
+        return try ModelContext(container).fetch(FetchDescriptor<Session>()).map(\.snapshot)
+    }
 }

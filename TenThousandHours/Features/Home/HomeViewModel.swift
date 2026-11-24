@@ -17,6 +17,9 @@ struct HomeViewModel {
         if let sessionError = error as? SessionError {
             return sessionError.errorDescription
         }
+        if let storeError = error as? SharedStoreError {
+            return storeError.errorDescription
+        }
         return String(localized: "Не удалось сохранить данные. Попробуйте ещё раз.")
     }
 

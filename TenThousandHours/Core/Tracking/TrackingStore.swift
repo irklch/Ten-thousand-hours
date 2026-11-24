@@ -17,38 +17,59 @@ final class TrackingStore {
 
     @ObservationIgnored private let engine: TimerEngine
     @ObservationIgnored private let repository: any SessionRepository
+    @ObservationIgnored private let lock: FileLockCoordinator?
+    @ObservationIgnored private let onSessionsChanged: () -> Void
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
     @ObservationIgnored private var refreshClientCount = 0
     @ObservationIgnored private var tickerTask: Task<Void, Never>?
 
-    init(repository: any SessionRepository, now: @escaping () -> Date = Date.init) {
+    /// - Parameters:
+    ///   - lock: the same cross-process lock the widget uses; `nil` only for stores in memory.
+    ///   - onSessionsChanged: called after Play, Stop and a duration edit are saved successfully
+    ///     (in the app this reloads the widget timeline).
+    init(
+        repository: any SessionRepository,
+        lock: FileLockCoordinator? = nil,
+        onSessionsChanged: @escaping () -> Void = {},
+        now: @escaping () -> Date = Date.init
+    ) {
         self.repository = repository
+        self.lock = lock
+        self.onSessionsChanged = onSessionsChanged
         self.now = now
-        self.engine = TimerEngine(repository: repository, now: now)
+        self.engine = TimerEngine(repository: repository, lock: lock, now: now)
     }
 
     nonisolated deinit {}
 
     func restore() {
         perform {
-            try engine.restore()
-            completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
+            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
             sessionsRevision += 1
         }
     }
 
+    /// Re-reads the state from the store before acting: the session may already have been started or
+    /// stopped from the widget, and the memory state alone is not trusted.
     func start() {
         perform {
-            try engine.start()
+            let result = try engine.start()
+            if case .started = result {
+                onSessionsChanged()
+            }
+            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
         }
     }
 
     func stop() {
         perform {
-            try engine.stop()
-            completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
+            let result = try engine.stop()
+            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
             sessionsRevision += 1
+            if result != .notRunning {
+                onSessionsChanged()
+            }
         }
     }
 
@@ -58,14 +79,17 @@ final class TrackingStore {
 
     @discardableResult
     func updateDuration(ofSessionWithID id: UUID, to durationSeconds: Int) throws -> SessionSnapshot {
-        let updated = try repository.updateDuration(ofSessionWithID: id, to: durationSeconds)
+        let updated = try FileLockCoordinator.perform(lock) {
+            try repository.updateDuration(ofSessionWithID: id, to: durationSeconds)
+        }
         reloadProgress()
+        onSessionsChanged()
         return updated
     }
 
     func reloadProgress() {
         do {
-            completedSessionsSeconds = try repository.totalCompletedDurationSeconds()
+            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
         } catch {
             self.error = error
         }

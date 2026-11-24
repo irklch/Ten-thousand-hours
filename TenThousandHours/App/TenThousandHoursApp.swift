@@ -1,46 +1,68 @@
-import SwiftData
 import SwiftUI
 
 @main
 struct TenThousandHoursApp: App {
-    private let modelContainer: ModelContainer
-    @State private var trackingStore: TrackingStore
+    @State private var trackingStore: TrackingStore?
+    @State private var storageError: (any Error)?
 
     init() {
-        let container: ModelContainer
         do {
-            container = try Self.makeModelContainer()
+            _trackingStore = State(initialValue: try Self.openStore())
         } catch {
-            fatalError("Не удалось создать хранилище SwiftData: \(error)")
+            _storageError = State(initialValue: error)
         }
-        modelContainer = container
-        let repository = SwiftDataSessionRepository(context: container.mainContext)
-        #if DEBUG
-        do {
-            try UITestingStore.seedIfRequested(repository: repository)
-        } catch {
-            fatalError("Не удалось подготовить данные UI-тестов: \(error)")
-        }
-        #endif
-        let store = TrackingStore(repository: repository)
-        store.restore()
-        _trackingStore = State(initialValue: store)
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(trackingStore)
+            if let trackingStore {
+                RootView()
+                    .environment(trackingStore)
+            } else {
+                StorageUnavailableView(error: storageError, retry: retry)
+            }
         }
-        .modelContainer(modelContainer)
     }
 
-    private static func makeModelContainer() throws -> ModelContainer {
+    /// Opens the store again after a temporary unavailability. Creates no replacement store.
+    private func retry() {
+        do {
+            trackingStore = try Self.openStore()
+            storageError = nil
+        } catch {
+            storageError = error
+        }
+    }
+
+    private static func openStore() throws -> TrackingStore {
         #if DEBUG
+        try UITestingStore.simulateFailureIfRequested()
         if let storeURL = try UITestingStore.storeURLIfRequested() {
-            return try ModelContainerFactory.makeContainer(storeURL: storeURL)
+            return try TrackingStore.open(storeURL: storeURL, seed: { try UITestingStore.seedIfRequested(repository: $0) })
         }
         #endif
-        return try ModelContainerFactory.makeContainer()
+        return try TrackingStore.open(storeURL: ModelContainerFactory.sharedStoreURL())
+    }
+}
+
+extension TrackingStore {
+    /// The app's store over the store file in the App Group (in UI tests, a temporary file).
+    /// If the store cannot be opened or read, it throws: there is no fallback store and no made-up zero state.
+    static func open(
+        storeURL: URL,
+        seed: (any SessionRepository) throws -> Void = { _ in }
+    ) throws -> TrackingStore {
+        let repository = SwiftDataSessionRepository(container: try ModelContainerFactory.makeContainer(storeURL: storeURL))
+        try seed(repository)
+        let store = TrackingStore(
+            repository: repository,
+            lock: FileLockCoordinator(lockFileURL: ModelContainerFactory.lockFileURL(forStoreAt: storeURL)),
+            onSessionsChanged: WidgetTimelineReloader.reload
+        )
+        store.restore()
+        if let error = store.error {
+            throw error
+        }
+        return store
     }
 }

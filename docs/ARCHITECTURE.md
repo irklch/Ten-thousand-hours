@@ -5,34 +5,28 @@
 ## Структура
 
 ```
-TenThousandHours/
-├── App/                    точка входа, корневой TabView, список вкладок
+TenThousandHours/           приложение
+├── App/                    точка входа (открытие хранилища, экран ошибки с «Повторить»), корневой TabView
 ├── Core/
-│   ├── Session/            SessionSnapshot, SessionRules, SessionError, SessionDuration/DateFormatter, SessionDurationInput
-│   ├── Timer/              TimerEngine — Play/Stop/restore по сохранённым timestamp; ElapsedTimeFormatter
-│   ├── Progress/           ProgressCalculator, ProgressGoal (10 000 ч), ProgressFormatter
-│   └── Tracking/           TrackingStore — @Observable состояние для HomeViewModel
-├── DesignSystem/           цвета, типографика, отступы и радиусы
-│   └── Components/         PlayStopButton, ProgressDot, HistoryRow (презентационные)
-├── Data/
-│   ├── Models/             @Model Session
-│   ├── Repositories/       SessionRepository (протокол) + SwiftDataSessionRepository
-│   └── Persistence/        ModelContainerFactory — единая точка создания SwiftData-контейнера
-├── Features/
-│   ├── Home/               HomeView (по Figma) + HomeViewModel (форматирование, действия)
-│   ├── Progress/           сетка 10 000 точек (геометрия, позиционирование, отрисовка), FullscreenProgressView
-│   └── History/            HistoryView/ViewModel, EditSessionDurationView/ViewModel
-├── Localizable.xcstrings   строки (язык разработки — ru)
-└── Assets.xcassets
-TenThousandHoursTests/      unit-тесты (XCTest)
-TenThousandHoursUITests/    UI-тест навигации по вкладкам
+│   ├── Session/            SessionDuration/DateFormatter, SessionDurationInput
+│   ├── Timer/              ElapsedTimeFormatter
+│   └── Tracking/           TrackingStore — @Observable состояние для экранов
+├── Features/               Home, Progress (сетка), History
+└── TenThousandHours.entitlements   App Group
+Shared/                     общий код приложения и Widget Extension (одна synchronized-группа в двух target)
+├── Session/                SessionSnapshot, SessionRules, SessionError
+├── Timer/                  TimerEngine — Play/Stop/restore по сохранённым timestamp
+├── Progress/               ProgressCalculator, ProgressGoal, ProgressFormatter
+├── Persistence/            @Model Session, SessionRepository + SwiftData-реализация,
+│                           ModelContainerFactory (схема + URL стора в App Group), FileLockCoordinator (flock)
+├── Tracking/               TrackingStatus, SharedTracking, StartTrackingIntent / StopTrackingIntent
+├── Widgets/                TrackingWidgetDisplay, TrackingTimelinePlanner, TrackingWidgetView
+├── DesignSystem/           цвета, типографика, отступы, компоненты
+└── Localizable.xcstrings   строки (язык разработки — ru)
+TenThousandHoursWidgets/    Widget Extension: WidgetBundle, TimelineProvider, Info.plist, entitlements
+TenThousandHoursTests/      unit- и интеграционные тесты (XCTest)
+TenThousandHoursUITests/    UI-тесты; WidgetUITests — проверка виджета на Springboard (запуск вручную)
 ```
-
-Папки, которые появятся на следующих этапах:
-
-| Папка | Этап | Что будет внутри |
-|---|---|---|
-| `Shared` | виджеты | контракты, общие для приложения и Widget Extension (снимок состояния таймера, идентификатор App Group) |
 
 ## Принципы
 
@@ -75,7 +69,16 @@ TenThousandHoursUITests/    UI-тест навигации по вкладкам
 - История перезагружается по `TrackingStore.sessionsRevision`, который меняется только при изменении данных (restore, Stop, редактирование), а не каждую секунду.
 - Редактирование: нативный sheet с `Form` и двумя полями. `SessionDurationInput` валидирует ввод (целые неотрицательные часы, минуты 0–59, ≥ 1 минуты, защита от переполнения Int). Сохранение — `TrackingStore.updateDuration` → `SessionRepository.updateDuration` (меняется только `durationSeconds`; остаточные секунды обнуляются только при явном сохранении) → `reloadProgress()` пересчитывает общий прогресс, поэтому главная, сетка и полноэкранный экран обновляются сразу, а активная сессия продолжает идти.
 
+## Виджеты, App Intents и App Group (этап 6)
+
+- **Одно хранилище.** В production есть ровно одна база SwiftData: `<App Group group.com.irklch.TenThousandHours>/Library/Application Support/TenThousandHours.store`. Её URL и схему задаёт только `ModelContainerFactory`; приложение (`TrackingStore.open`) и виджет/intents (`SharedTracking`) открывают один и тот же файл — каждый процесс своим `ModelContainer`. Других баз, резервных копий и переключения между хранилищами нет. In-memory и временные файлы используются только в тестах, Preview и UI-тестах.
+- **Недоступность хранилища** (нет App Group, SwiftData не открывается). Приложение не падает и не создаёт другую базу: вместо экранов показывается «Данные недоступны» без прогресса и Play/Stop, с кнопкой «Повторить», которая заново пытается открыть тот же файл. Существующий файл не удаляется и не пересоздаётся. Виджет показывает «Данные недоступны. Откройте приложение.» без кнопки и повторяет попытку через 15 минут; контейнер в процессе виджета кэшируется только после удачного открытия.
+- **Межпроцессная координация.** SQLite-стор SwiftData безопасен для одновременного доступа нескольких процессов, но последовательность «проверить → записать» не атомарна между процессами, а `@MainActor`/actor работают только внутри процесса. Поэтому Play, Stop, редактирование длительности и чтение состояния (активная сессия + накопленный прогресс) выполняются под `flock` на файле `TenThousandHours.lock` рядом со стором (`FileLockCoordinator`). Внутри блокировки состояние перечитывается из стора и только потом пишется. Блокировка держится миллисекунды и без точек приостановки; при падении процесса система снимает её сама; ожидание ограничено 3 с, затем операция завершается ошибкой без изменений. Блокировка не реентерабельна — вложенных операций нет.
+- **Свежие данные.** `SwiftDataSessionRepository(container:)` создаёт новый `ModelContext` на каждую операцию, поэтому изменения другого процесса видны сразу. Приложение перечитывает стор при возврате в `.active` (`restore()`), без polling.
+- **App Intents** `StartTrackingIntent` / `StopTrackingIntent` выполняются в процессе виджета через тот же `TimerEngine`, без открытия приложения. Повторный Play/Stop ничего не меняют, короткие сессии отбрасываются по `SessionRules`. `TimerEngine`, репозиторий и модель `nonisolated`, поэтому одна и та же логика работает и в приложении, и в виджете, и в тестах с настоящей параллельностью.
+- **Обновление виджетов.** `WidgetCenter.reloadTimelines(ofKind:)` после Play/Stop/редактирования в приложении и после intents. Timeline: таймер остановлен — одна запись, `.never`; таймер идёт — записи раз в минуту на час вперёд, `.atEnd`; стор недоступен — повтор через 15 минут. Секундного таймера в виджете нет.
+- **UI виджетов** по Figma: Small — кнопка Play/Stop по центру; Large — процент (80 pt Light), часы, кнопка справа внизу; отступ 24 pt, `containerBackground`, `Button(intent:)`. В tinted-режимах iOS 18+ кнопка рисуется монохромной (иконка вырезана из круга).
+
 ## Подготовка к расширениям
 
-- **Widget Extension / Live Activity / App Intents**: добавляются отдельными таргетами. Общий код (`DesignSystem`, будущий `Shared`, модели SwiftData) подключается к ним как дополнительные synchronized-группы.
-- **App Group**: `ModelConfiguration` использует `groupContainer: .automatic` по умолчанию — после добавления entitlement App Group хранилище SwiftData будет создаваться в общем контейнере и станет доступно виджетам. Важно добавить App Group до выпуска первой версии, иначе потребуется миграция файла хранилища.
+- **Live Activity** и другие расширения подключают папку `Shared` как дополнительную synchronized-группу и работают с общим стором через `SharedTracking`.
