@@ -79,6 +79,14 @@ TenThousandHoursUITests/    UI-тесты; WidgetUITests — проверка в
 - **Обновление виджетов.** `WidgetCenter.reloadTimelines(ofKind:)` после Play/Stop/редактирования в приложении и после intents. Timeline: таймер остановлен — одна запись, `.never`; таймер идёт — записи раз в минуту на час вперёд, `.atEnd`; стор недоступен — повтор через 15 минут. Секундного таймера в виджете нет.
 - **UI виджетов** по Figma: Small — кнопка Play/Stop по центру; Large — процент (80 pt Light), часы, кнопка справа внизу; отступ 24 pt, `containerBackground`, `Button(intent:)`. В tinted-режимах iOS 18+ кнопка рисуется монохромной (иконка вырезана из круга).
 
+## Live Activity и Dynamic Island (этап 7)
+
+- **Не хранилище.** `TrackingActivityAttributes` (`Shared/LiveActivity`) содержит только `sessionID` и `startDate` активной сессии; `ContentState` пустой. Длительность считает система через `Text(timerInterval: startDate...distantFuture)`: таймеров в приложении нет, погрешность не накапливается, счётчик часов не ограничен 24 часами.
+- **Согласование.** `LiveActivityController.sync(activeSession:)` сверяет `Activity.activities` с активной сессией из SwiftData. Логика решения вынесена в чистую функцию `LiveActivityPlan`: нет сессии — завершить все activity; есть сессия — оставить одну для её `sessionID`, остальные завершить, при отсутствии подходящей — запросить новую.
+- **Когда вызывается.** В приложении — через `TrackingStore.onActiveSessionRead`: при восстановлении (запуск и `scenePhase == .active`) и после Play/Stop. В intents — через `SharedTracking.didChange()`: перезагрузка виджетов, затем согласование Live Activity.
+- **Процесс intents.** `StartTrackingIntent` и `StopTrackingIntent` реализуют `LiveActivityIntent`, а их файл входит в оба target. Поэтому система выполняет их в процессе приложения, где ActivityKit может запустить или завершить activity. Stop из Lock Screen и Dynamic Island — тот же `StopTrackingIntent`, с той же блокировкой и правилом 60 секунд.
+- **Ограничения.** Если Live Activities выключены или ActivityKit отказал, отказ пишется в лог (`os.Logger`, категория `LiveActivity`), а сессия и таймер в SwiftData продолжают работать. Система может завершить activity сама (≈8 ч активного показа). В этом случае при следующем открытии приложения activity для идущей сессии будет запрошена заново. Push-обновлений и фоновых режимов нет.
+
 ## Подготовка к расширениям
 
 - **Live Activity** и другие расширения подключают папку `Shared` как дополнительную synchronized-группу и работают с общим стором через `SharedTracking`.

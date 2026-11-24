@@ -1,11 +1,11 @@
 import Foundation
 import SwiftData
 
-/// The single place that defines the SwiftData schema and the store location.
+/// Единственное место, где задаются схема SwiftData и расположение хранилища.
 ///
-/// In production there is one store: `<App Group>/Library/Application Support/TenThousandHours.store`.
-/// The app and the Widget Extension open it at the same explicit URL; there is no switching to other stores.
-/// An in-memory store and a store at an arbitrary URL are only for tests, Preview and UI tests.
+/// В продакшене хранилище одно: `<App Group>/Library/Application Support/TenThousandHours.store`.
+/// Приложение и Widget Extension открывают его по одному и тому же явному URL; переключения на другие хранилища нет.
+/// Хранилище в памяти и хранилище по произвольному URL — только для тестов, Preview и UI-тестов.
 nonisolated enum ModelContainerFactory {
     static let appGroupIdentifier = "group.com.irklch.TenThousandHours"
 
@@ -13,7 +13,7 @@ nonisolated enum ModelContainerFactory {
         Schema([Session.self])
     }
 
-    /// URL of the shared store. Throws `appGroupUnavailable` if the App Group container is unavailable.
+    /// URL общего хранилища. Бросает `appGroupUnavailable`, если контейнер App Group недоступен.
     static func sharedStoreURL(
         appGroupIdentifier: String = appGroupIdentifier,
         fileManager: FileManager = .default
@@ -26,7 +26,7 @@ nonisolated enum ModelContainerFactory {
             .appendingPathComponent("TenThousandHours.store")
     }
 
-    /// The lock file for operations on the store (see `FileLockCoordinator`) lives next to the store.
+    /// Файл блокировки для операций с хранилищем (см. `FileLockCoordinator`) лежит рядом с хранилищем.
     static func lockFileURL(forStoreAt storeURL: URL) -> URL {
         storeURL.deletingPathExtension().appendingPathExtension("lock")
     }

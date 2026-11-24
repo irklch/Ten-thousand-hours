@@ -2,8 +2,8 @@ import Foundation
 import SwiftData
 import WidgetKit
 
-/// Access to the shared store from the widget process and from App Intents.
-/// The logic is the same `TimerEngine` and repository the app uses.
+/// Доступ к общему хранилищу из процесса виджета и из App Intents.
+/// Логика — те же `TimerEngine` и репозиторий, что использует приложение.
 enum SharedTracking {
     private static var cachedContainer: ModelContainer?
 
@@ -17,8 +17,21 @@ enum SharedTracking {
         return try TrackingStatus.read(from: repository, lock: lock)
     }
 
-    /// The container is cached only after a successful open: if the store is temporarily unavailable,
-    /// the next call tries again.
+    /// После сохранённого Play/Stop: виджеты получают запрос на перезагрузку, а Live Activity приводится
+    /// в соответствие с тем, что сейчас лежит в SwiftData. Если хранилище не читается, ошибка выходит из `perform`.
+    static func didChange() async {
+        WidgetTimelineReloader.reload()
+        do {
+            let (repository, lock) = try storage()
+            let active = try FileLockCoordinator.perform(lock) { try repository.activeSession() }
+            await LiveActivityController.sync(activeSession: active)
+        } catch {
+            LiveActivityController.logSyncFailure(error)
+        }
+    }
+
+    /// Контейнер кэшируется только после успешного открытия: если хранилище временно недоступно,
+    /// следующий вызов попробует снова.
     private static func storage() throws -> (SwiftDataSessionRepository, FileLockCoordinator) {
         let storeURL = try ModelContainerFactory.sharedStoreURL()
         let container = try cachedContainer ?? ModelContainerFactory.makeContainer(storeURL: storeURL)
@@ -34,7 +47,7 @@ nonisolated enum TrackingWidgetKind {
     static let tracking = "TenThousandHoursTrackingWidget"
 }
 
-/// Asks WidgetKit to rebuild the widget timeline after a data change; the system decides when to redraw.
+/// Просит WidgetKit пересобрать таймлайн виджета после изменения данных; когда перерисовать, решает система.
 nonisolated enum WidgetTimelineReloader {
     static func reload() {
         WidgetCenter.shared.reloadTimelines(ofKind: TrackingWidgetKind.tracking)

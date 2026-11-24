@@ -1,11 +1,11 @@
 import Foundation
 
-/// Mutual exclusion between processes (the app and the Widget Extension) for operations that change sessions.
+/// Взаимное исключение между процессами (приложение и Widget Extension) для операций, меняющих сессии.
 ///
-/// `@MainActor`, actors and in-memory locks only work inside one process, so the lock is a `flock` on a
-/// file next to the store in the App Group. The operation holds it for milliseconds and has no suspension
-/// points. If the process crashes, the system releases the lock itself. Waiting is bounded by `timeout`,
-/// after which the operation fails with `storeBusy` without changes.
+/// `@MainActor`, акторы и блокировки в памяти работают только внутри одного процесса, поэтому блокировка — это `flock`
+/// на файле рядом с хранилищем в App Group. Операция держит её миллисекунды и не имеет точек
+/// приостановки. Если процесс падает, система сама снимает блокировку. Ожидание ограничено `timeout`,
+/// после чего операция завершается с `storeBusy` без изменений.
 nonisolated struct FileLockCoordinator: Sendable {
     let lockFileURL: URL
     var timeout: Duration = .seconds(3)
@@ -43,7 +43,7 @@ nonisolated struct FileLockCoordinator: Sendable {
 }
 
 nonisolated extension FileLockCoordinator {
-    /// Runs the operation under the lock if there is one (stores in memory for tests and Preview have no lock).
+    /// Выполняет операцию под блокировкой, если она есть (у хранилищ в памяти для тестов и Preview блокировки нет).
     static func perform<T>(_ lock: FileLockCoordinator?, _ operation: () throws -> T) throws -> T {
         guard let lock else { return try operation() }
         return try lock.perform(operation)

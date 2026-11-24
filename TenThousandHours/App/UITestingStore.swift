@@ -5,7 +5,7 @@ enum UITestingStore {
     static let enableArgument = "-ui-testing"
     static let resetArgument = "-ui-testing-reset"
     static let seedHoursArgument = "-ui-testing-seed-hours"
-    /// The first N attempts to open the store fail: checks the error screen and Retry.
+    /// Первые N попыток открыть хранилище падают: проверяет экран ошибки и Retry.
     static let storageFailuresArgument = "-ui-testing-storage-failures"
     private static var simulatedFailures = 0
 

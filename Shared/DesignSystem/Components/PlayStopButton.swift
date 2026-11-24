@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// Play/Stop circle from the Figma Design System (88 pt, 36 pt icon). Shared by the app and the widgets.
+/// Круг Play/Stop из Figma Design System (88 pt, иконка 36 pt). Общий для приложения и виджетов.
 struct PlayStopButtonLabel: View {
     enum Appearance {
-        /// Black circle with a white icon, as in Figma.
+        /// Чёрный круг с белой иконкой, как в Figma.
         case standard
-        /// For the tinted widget modes (iOS 18+): the system recolors the content into one tint,
-        /// so the icon is cut out of the circle instead of being drawn in white on top of it.
+        /// Для тонированных режимов виджета (iOS 18+): система перекрашивает содержимое в один оттенок,
+        /// поэтому иконка вырезается из круга, а не рисуется белым поверх него.
         case monochrome
     }
 

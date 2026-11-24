@@ -6,9 +6,9 @@ nonisolated struct TrackingWidgetEntry: TimelineEntry, Sendable {
     let state: TrackingWidgetState
 }
 
-/// Reads the state from the shared SwiftData store on every timeline request.
-/// The app and the intents call `reloadTimelines` after every change, so the widget always works with
-/// what is written to the store, not with a cache.
+/// Читает состояние из общего хранилища SwiftData при каждом запросе таймлайна.
+/// Приложение и intents вызывают `reloadTimelines` после каждого изменения, поэтому виджет всегда работает с тем,
+/// что записано в хранилище, а не с кэшем.
 nonisolated struct TrackingTimelineProvider: TimelineProvider {
     func placeholder(in context: Context) -> TrackingWidgetEntry {
         TrackingWidgetEntry(date: Date(), state: .ready(Self.sampleStatus))
@@ -40,7 +40,7 @@ nonisolated struct TrackingTimelineProvider: TimelineProvider {
         }
     }
 
-    /// Example for the widget gallery, matching the Figma mockup.
+    /// Пример для галереи виджетов, как в макете Figma.
     private static let sampleStatus = TrackingStatus(
         activeSessionStartDate: nil,
         completedSessionsSeconds: 1_245 * ProgressGoal.secondsPerHour + 1_620

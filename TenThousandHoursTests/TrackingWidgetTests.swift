@@ -124,9 +124,9 @@ final class TrackingTimelinePlannerTests: XCTestCase {
     }
 }
 
-/// Rendering the widgets at the extreme system sizes (iPhone SE … Pro Max) and checking that the
-/// text and the button fit.
-/// With the `WIDGET_SNAPSHOT_DIR` environment variable set, the images are saved for visual comparison with Figma.
+/// Рендер виджетов в крайних системных размерах (iPhone SE … Pro Max) и проверка, что
+/// текст и кнопка помещаются.
+/// Если задана переменная окружения `WIDGET_SNAPSHOT_DIR`, изображения сохраняются для визуального сравнения с Figma.
 final class TrackingWidgetRenderingTests: XCTestCase {
     private struct Case {
         let name: String
@@ -168,7 +168,7 @@ final class TrackingWidgetRenderingTests: XCTestCase {
         }
     }
 
-    /// The widest percent («100,00%») at 80 pt fits the smallest Large widget, given `minimumScaleFactor`.
+    /// Самый широкий процент («100,00%») в 80 pt помещается в самый маленький Large-виджет с учётом `minimumScaleFactor`.
     @MainActor
     func testPercentFitsSmallestLargeWidget() {
         let font = UIFont.systemFont(ofSize: AppTextStyle.largeTimer.size, weight: .light)

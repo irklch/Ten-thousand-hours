@@ -5,10 +5,11 @@ import WidgetKit
 struct TenThousandHoursWidgetsBundle: WidgetBundle {
     var body: some Widget {
         TrackingWidget()
+        TrackingLiveActivity()
     }
 }
 
-/// One widget in two sizes: Small (Play/Stop) and Large (progress + Play/Stop).
+/// Один виджет в двух размерах: Small (Play/Stop) и Large (прогресс + Play/Stop).
 struct TrackingWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: TrackingWidgetKind.tracking, provider: TrackingTimelineProvider()) { entry in

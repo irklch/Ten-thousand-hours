@@ -1,15 +1,15 @@
 import Foundation
 
-/// Widget state read from the shared store.
+/// Состояние виджета, прочитанное из общего хранилища.
 nonisolated enum TrackingWidgetState: Equatable, Sendable {
     case ready(TrackingStatus)
-    /// The store cannot be read (App Group unavailable, SwiftData error). The widget then shows no
-    /// Play/Stop and no progress instead of a made-up zero state.
+    /// Хранилище не читается (App Group недоступна, ошибка SwiftData). Тогда виджет не показывает
+    /// Play/Stop и прогресс вместо выдуманного нулевого состояния.
     case unavailable
 }
 
-/// Text and state of the widget at a given moment. Formulas and formatting are the shared
-/// `ProgressCalculator` / `ProgressFormatter`, so the numbers match the app.
+/// Текст и состояние виджета в заданный момент. Формулы и форматирование — общие
+/// `ProgressCalculator` / `ProgressFormatter`, поэтому цифры совпадают с приложением.
 nonisolated struct TrackingWidgetDisplay: Equatable, Sendable {
     enum Content: Equatable, Sendable {
         case ready(Ready)
@@ -49,14 +49,14 @@ nonisolated struct TrackingWidgetDisplay: Equatable, Sendable {
     }
 }
 
-/// Timeline plan. The widget has no per-second timer: WidgetKit shows ready-made entries itself.
+/// План таймлайна. У виджета нет посекундного таймера: WidgetKit сам показывает готовые записи.
 ///
-/// - Timer stopped: progress does not change, one entry, no reloads (the app and the intents reload
-///   the timeline after changes).
-/// - Timer running: an entry every minute for an hour ahead (0,01 % is 36 seconds, so the percent
-///   moves noticeably), then a new timeline. The system may show updates with a delay; continuous
-///   per-second updating is not promised.
-/// - Store unavailable: retry in 15 minutes.
+/// - Таймер остановлен: прогресс не меняется, одна запись, без перезагрузок (приложение и intents перезагружают
+///   таймлайн после изменений).
+/// - Таймер идёт: запись каждую минуту на час вперёд (0,01 % — это 36 секунд, так что процент
+///   заметно движется), затем новый таймлайн. Система может показывать обновления с задержкой; непрерывное
+///   посекундное обновление не обещается.
+/// - Хранилище недоступно: повтор через 15 минут.
 nonisolated enum TrackingTimelinePlanner {
     static let runningStep: TimeInterval = 60
     static let runningEntryCount = 60
@@ -90,7 +90,7 @@ nonisolated enum TrackingTimelinePlanner {
 }
 
 extension SharedTracking {
-    /// The widget state. A read error turns into an explicit `unavailable` state; it is not hidden.
+    /// Состояние виджета. Ошибка чтения превращается в явное состояние `unavailable` и не скрывается.
     static func widgetState() -> TrackingWidgetState {
         do {
             return .ready(try status())

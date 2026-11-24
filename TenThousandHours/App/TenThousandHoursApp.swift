@@ -24,7 +24,7 @@ struct TenThousandHoursApp: App {
         }
     }
 
-    /// Opens the store again after a temporary unavailability. Creates no replacement store.
+    /// Заново открывает хранилище после временной недоступности. Не создаёт хранилище на замену.
     private func retry() {
         do {
             trackingStore = try Self.openStore()
@@ -46,8 +46,8 @@ struct TenThousandHoursApp: App {
 }
 
 extension TrackingStore {
-    /// The app's store over the store file in the App Group (in UI tests, a temporary file).
-    /// If the store cannot be opened or read, it throws: there is no fallback store and no made-up zero state.
+    /// Store приложения поверх файла хранилища в App Group (в UI-тестах — временный файл).
+    /// Если хранилище не открывается или не читается, бросает ошибку: запасного хранилища и выдуманного нулевого состояния нет.
     static func open(
         storeURL: URL,
         seed: (any SessionRepository) throws -> Void = { _ in }
@@ -57,7 +57,10 @@ extension TrackingStore {
         let store = TrackingStore(
             repository: repository,
             lock: FileLockCoordinator(lockFileURL: ModelContainerFactory.lockFileURL(forStoreAt: storeURL)),
-            onSessionsChanged: WidgetTimelineReloader.reload
+            onSessionsChanged: WidgetTimelineReloader.reload,
+            onActiveSessionRead: { session in
+                Task { await LiveActivityController.sync(activeSession: session) }
+            }
         )
         store.restore()
         if let error = store.error {

@@ -19,24 +19,29 @@ final class TrackingStore {
     @ObservationIgnored private let repository: any SessionRepository
     @ObservationIgnored private let lock: FileLockCoordinator?
     @ObservationIgnored private let onSessionsChanged: () -> Void
+    @ObservationIgnored private let onActiveSessionRead: (SessionSnapshot?) -> Void
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
     @ObservationIgnored private var refreshClientCount = 0
     @ObservationIgnored private var tickerTask: Task<Void, Never>?
 
     /// - Parameters:
-    ///   - lock: the same cross-process lock the widget uses; `nil` only for stores in memory.
-    ///   - onSessionsChanged: called after Play, Stop and a duration edit are saved successfully
-    ///     (in the app this reloads the widget timeline).
+    ///   - lock: та же межпроцессная блокировка, что использует виджет; `nil` только для хранилищ в памяти.
+    ///   - onSessionsChanged: вызывается после успешного сохранения Play, Stop и правки длительности
+    ///     (в приложении перезагружает таймлайн виджета).
+    ///   - onActiveSessionRead: вызывается с активной сессией из хранилища после успешного восстановления,
+    ///     Play и Stop (в приложении приводит Live Activity в соответствие).
     init(
         repository: any SessionRepository,
         lock: FileLockCoordinator? = nil,
         onSessionsChanged: @escaping () -> Void = {},
+        onActiveSessionRead: @escaping (SessionSnapshot?) -> Void = { _ in },
         now: @escaping () -> Date = Date.init
     ) {
         self.repository = repository
         self.lock = lock
         self.onSessionsChanged = onSessionsChanged
+        self.onActiveSessionRead = onActiveSessionRead
         self.now = now
         self.engine = TimerEngine(repository: repository, lock: lock, now: now)
     }
@@ -47,11 +52,12 @@ final class TrackingStore {
         perform {
             completedSessionsSeconds = try engine.restore().completedSessionsSeconds
             sessionsRevision += 1
+            try reportActiveSession()
         }
     }
 
-    /// Re-reads the state from the store before acting: the session may already have been started or
-    /// stopped from the widget, and the memory state alone is not trusted.
+    /// Перед действием заново читает состояние из хранилища: сессию могли уже запустить или
+    /// остановить из виджета, и одному состоянию в памяти доверять нельзя.
     func start() {
         perform {
             let result = try engine.start()
@@ -59,6 +65,7 @@ final class TrackingStore {
                 onSessionsChanged()
             }
             completedSessionsSeconds = try engine.restore().completedSessionsSeconds
+            try reportActiveSession()
         }
     }
 
@@ -70,7 +77,12 @@ final class TrackingStore {
             if result != .notRunning {
                 onSessionsChanged()
             }
+            try reportActiveSession()
         }
+    }
+
+    private func reportActiveSession() throws {
+        onActiveSessionRead(try FileLockCoordinator.perform(lock) { try repository.activeSession() })
     }
 
     func completedSessions() throws -> [SessionSnapshot] {

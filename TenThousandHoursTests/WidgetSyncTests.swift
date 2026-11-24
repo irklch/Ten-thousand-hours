@@ -1,7 +1,7 @@
 import XCTest
 @testable import TenThousandHours
 
-/// The app (`TrackingStore`) and the widget (`TimerEngine` with its own container) over one store file.
+/// Приложение (`TrackingStore`) и виджет (`TimerEngine` со своим контейнером) поверх одного файла хранилища.
 final class WidgetSyncTests: XCTestCase {
     @MainActor
     func testPlayFromWidgetIsVisibleToApp() throws {
@@ -121,10 +121,10 @@ final class WidgetSyncTests: XCTestCase {
     }
 }
 
-/// Truly simultaneous operations: each participant runs on its own thread (`DispatchQueue.concurrentPerform`)
-/// with its own `ModelContainer`, `ModelContext` and file descriptor for the lock. This is concurrency inside one
-/// test process; the lock is `flock`, which works the same way for separate processes, but real separate
-/// processes (app + Widget Extension) are not started here.
+/// Действительно одновременные операции: каждый участник работает в своём потоке (`DispatchQueue.concurrentPerform`)
+/// со своими `ModelContainer`, `ModelContext` и файловым дескриптором для блокировки. Это конкурентность внутри одного
+/// тестового процесса; блокировка — `flock`, который так же работает и для отдельных процессов, но настоящие отдельные
+/// процессы (приложение + Widget Extension) здесь не запускаются.
 final class ConcurrentOperationsTests: XCTestCase {
     private let participants = 8
 
@@ -219,7 +219,7 @@ final class ConcurrentOperationsTests: XCTestCase {
     }
 }
 
-/// Holds the `flock` through its own file descriptor (as another participant would).
+/// Держит `flock` через собственный файловый дескриптор (как это делал бы другой участник).
 private final class ExternalLockHolder: @unchecked Sendable {
     private let descriptor: Int32
 

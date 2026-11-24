@@ -2,8 +2,8 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-/// Widget content per Figma: Small is a Play/Stop button in the middle; Large is the percent, the
-/// hours and Play/Stop in the bottom right corner.
+/// Содержимое виджета по Figma: Small — кнопка Play/Stop посередине; Large — процент,
+/// часы и Play/Stop в правом нижнем углу.
 struct TrackingWidgetView: View {
     let display: TrackingWidgetDisplay
     let family: WidgetFamily
@@ -63,7 +63,7 @@ struct TrackingWidgetView: View {
     }
 
     private var unavailableContent: some View {
-        // No button and no progress: tapping the widget opens the app, which shows the error and Retry.
+        // Ни кнопки, ни прогресса: нажатие на виджет открывает приложение, где показаны ошибка и Retry.
         Text("Данные недоступны. Откройте приложение.")
             .appTextStyle(family == .systemSmall ? .caption : .body)
             .foregroundStyle(AppColor.secondaryText)

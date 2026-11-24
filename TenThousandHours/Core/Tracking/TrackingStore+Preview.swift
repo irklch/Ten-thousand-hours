@@ -1,6 +1,6 @@
 import SwiftData
 
-/// An in-memory store for `#Preview`. `#Preview` blocks are compiled in Release too, so this is not under `#if DEBUG`.
+/// Store в памяти для `#Preview`. Блоки `#Preview` компилируются и в Release, поэтому это не под `#if DEBUG`.
 extension TrackingStore {
     static func preview() -> TrackingStore {
         do {
