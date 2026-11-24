@@ -88,6 +88,14 @@ nonisolated final class SwiftDataSessionRepository: SessionRepository {
         return session.snapshot
     }
 
+    func deleteAllSessions() throws {
+        let context = makeContext()
+        for session in try context.fetch(FetchDescriptor<Session>()) {
+            context.delete(session)
+        }
+        try save(context)
+    }
+
     private func fetchActiveSession(in context: ModelContext) throws -> Session? {
         var descriptor = FetchDescriptor<Session>(
             predicate: #Predicate { $0.endDate == nil },

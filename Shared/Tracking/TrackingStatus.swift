@@ -6,6 +6,7 @@ nonisolated struct TrackingStatus: Equatable, Sendable {
     let completedSessionsSeconds: Int
 
     var isRunning: Bool { activeSessionStartDate != nil }
+    var isGoalCompleted: Bool { ProgressCalculator.isGoalCompleted(completedSessionsSeconds: completedSessionsSeconds) }
 
     /// Оба значения читаются под одной блокировкой, поэтому параллельный Stop не оставит виджет с остановленным
     /// таймером и прогрессом, посчитанным до сохранения сессии.
@@ -24,5 +25,23 @@ nonisolated struct TrackingStatus: Equatable, Sendable {
             completedSessionsSeconds: completedSessionsSeconds,
             activeSessionSeconds: activeSeconds
         )
+    }
+}
+
+/// То, что нужно системным представлениям вне приложения: Live Activity (активная сессия) и напоминаниям
+/// (идёт ли таймер, завершена ли цель). Читается из хранилища под одной блокировкой.
+nonisolated struct TrackingSyncState: Equatable, Sendable {
+    let activeSession: SessionSnapshot?
+    let isGoalCompleted: Bool
+
+    static func read(from repository: any SessionRepository, lock: FileLockCoordinator?) throws -> TrackingSyncState {
+        try FileLockCoordinator.perform(lock) {
+            TrackingSyncState(
+                activeSession: try repository.activeSession(),
+                isGoalCompleted: ProgressCalculator.isGoalCompleted(
+                    completedSessionsSeconds: try repository.totalCompletedDurationSeconds()
+                )
+            )
+        }
     }
 }

@@ -4,6 +4,7 @@ struct HomeView: View {
     @Environment(TrackingStore.self) private var store
     @Environment(\.scenePhase) private var scenePhase
     @State private var isFullscreenProgressPresented = false
+    @State private var isResetConfirmationPresented = false
 
     var body: some View {
         let viewModel = HomeViewModel(store: store)
@@ -30,19 +31,10 @@ struct HomeView: View {
             FullscreenProgressView()
                 .environment(store)
         }
-        .alert(
-            "Ошибка",
-            isPresented: Binding(
-                get: { viewModel.errorMessage != nil },
-                set: { isPresented in
-                    if !isPresented { viewModel.dismissError() }
-                }
-            )
-        ) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "")
+        .resetProgressConfirmation(isPresented: $isResetConfirmationPresented) {
+            viewModel.resetProgress()
         }
+        .errorAlert(viewModel)
     }
 
     private func timerSection(_ viewModel: HomeViewModel) -> some View {
@@ -59,8 +51,21 @@ struct HomeView: View {
                 .accessibilityAddTraits(.updatesFrequently)
                 .accessibilityIdentifier("home.timer")
 
-            PlayStopButton(isRunning: viewModel.isRunning) {
-                viewModel.togglePlayStop()
+            Group {
+                if viewModel.showsRestart {
+                    Button {
+                        isResetConfirmationPresented = true
+                    } label: {
+                        PlayStopButtonLabel(symbol: .restart)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Начать заново"))
+                    .accessibilityIdentifier("home.restart")
+                } else {
+                    PlayStopButton(isRunning: viewModel.isRunning) {
+                        viewModel.togglePlayStop()
+                    }
+                }
             }
             .disabled(viewModel.isProcessing)
         }

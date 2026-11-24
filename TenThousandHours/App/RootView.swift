@@ -21,6 +21,21 @@ struct RootView: View {
                 trackingStore.restore()
             }
         }
+        // Нажатие на напоминание открывает главную; таймер при этом не запускается.
+        .onReceive(NotificationCenter.default.publisher(for: .dailyReminderOpened)) { _ in
+            selectedTab = .home
+        }
+        .fullScreenCover(
+            isPresented: Binding(
+                get: { trackingStore.isCelebrationPending },
+                set: { isPresented in
+                    if !isPresented { trackingStore.dismissCelebration() }
+                }
+            )
+        ) {
+            GoalCelebrationView()
+                .environment(trackingStore)
+        }
     }
 }
 

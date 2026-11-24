@@ -5,6 +5,8 @@ struct HomeViewModel {
 
     var isRunning: Bool { store.isRunning }
     var isProcessing: Bool { store.isProcessing }
+    /// Вместо Play — «Начать заново»: цель достигнута и таймер не идёт (идущую сессию всё ещё можно остановить).
+    var showsRestart: Bool { store.isGoalCompleted && !store.isRunning }
     var timerText: String { ElapsedTimeFormatter.clock(store.currentSessionElapsedSeconds) }
     var timerAccessibilityValue: String { ElapsedTimeFormatter.spoken(store.currentSessionElapsedSeconds) }
     var progress: ProgressDisplay { ProgressDisplay(progress: store.progress) }
@@ -29,6 +31,22 @@ struct HomeViewModel {
             store.stop()
         } else {
             store.start()
+            requestNotificationsIfNeeded()
+        }
+    }
+
+    func resetProgress() {
+        store.resetProgress()
+    }
+
+    /// Разрешение на напоминания спрашиваем после первого Play: в этот момент понятно, зачем они нужны.
+    private func requestNotificationsIfNeeded() {
+        guard store.isRunning else { return }
+        let store = store
+        Task {
+            if await DailyReminderScheduler.requestAuthorizationIfNeeded() {
+                store.syncSystemState()
+            }
         }
     }
 

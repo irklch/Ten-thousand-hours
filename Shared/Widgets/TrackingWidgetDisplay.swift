@@ -18,13 +18,18 @@ nonisolated struct TrackingWidgetDisplay: Equatable, Sendable {
 
     struct Ready: Equatable, Sendable {
         let isRunning: Bool
+        /// Цель достигнута и таймер не идёт: вместо Play — отметка без действия, новый цикл начинается в приложении.
+        let isGoalCompleted: Bool
         let percentText: String
         let hoursText: String
         let percentAccessibilityLabel: String
         let hoursAccessibilityLabel: String
 
         var buttonAccessibilityLabel: String {
-            isRunning
+            if isGoalCompleted {
+                return String(localized: "Цель 10 000 часов достигнута")
+            }
+            return isRunning
                 ? String(localized: "Остановить отслеживание времени")
                 : String(localized: "Начать отслеживание времени")
         }
@@ -38,6 +43,7 @@ nonisolated struct TrackingWidgetDisplay: Equatable, Sendable {
             let progress = status.progress(at: date)
             content = .ready(Ready(
                 isRunning: status.isRunning,
+                isGoalCompleted: status.isGoalCompleted && !status.isRunning,
                 percentText: ProgressFormatter.percent(progress),
                 hoursText: ProgressFormatter.hours(progress),
                 percentAccessibilityLabel: ProgressFormatter.spokenPercent(progress),

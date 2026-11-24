@@ -25,6 +25,8 @@ nonisolated enum SessionError: LocalizedError, Equatable {
     case sessionIsActive
     case endDateBeforeStartDate
     case durationTooShort(Int)
+    case goalCompleted
+    case goalNotCompleted
 
     var errorDescription: String? {
         switch self {
@@ -40,6 +42,10 @@ nonisolated enum SessionError: LocalizedError, Equatable {
             String(localized: "Время завершения раньше времени начала")
         case .durationTooShort:
             String(localized: "Продолжительность сессии должна быть не меньше минуты")
+        case .goalCompleted:
+            String(localized: "Цель 10 000 часов достигнута. Чтобы продолжить, начните заново.")
+        case .goalNotCompleted:
+            String(localized: "Начать заново можно только после 10 000 часов")
         }
     }
 }

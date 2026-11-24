@@ -1,7 +1,24 @@
 import SwiftUI
 
 /// Круг Play/Stop из Figma Design System (88 pt, иконка 36 pt). Общий для приложения и виджетов.
+/// После 10 000 часов тот же круг показывает «Начать заново» (приложение) или «Цель достигнута» (виджет).
 struct PlayStopButtonLabel: View {
+    enum Symbol {
+        case play
+        case stop
+        case restart
+        case completed
+
+        var systemImage: String {
+            switch self {
+            case .play: "play.fill"
+            case .stop: "stop.fill"
+            case .restart: "arrow.counterclockwise"
+            case .completed: "checkmark"
+            }
+        }
+    }
+
     enum Appearance {
         /// Чёрный круг с белой иконкой, как в Figma.
         case standard
@@ -10,8 +27,17 @@ struct PlayStopButtonLabel: View {
         case monochrome
     }
 
-    let isRunning: Bool
+    let symbol: Symbol
     var appearance: Appearance = .standard
+
+    init(symbol: Symbol, appearance: Appearance = .standard) {
+        self.symbol = symbol
+        self.appearance = appearance
+    }
+
+    init(isRunning: Bool, appearance: Appearance = .standard) {
+        self.init(symbol: isRunning ? .stop : .play, appearance: appearance)
+    }
 
     static let diameter: CGFloat = 88
     private let iconSize: CGFloat = 36
@@ -40,7 +66,7 @@ struct PlayStopButtonLabel: View {
     }
 
     private var icon: some View {
-        Image(systemName: isRunning ? "stop.fill" : "play.fill")
+        Image(systemName: symbol.systemImage)
             .font(.system(size: iconSize * 0.75, weight: .bold))
             .frame(width: iconSize, height: iconSize)
     }

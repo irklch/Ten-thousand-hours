@@ -28,6 +28,12 @@ nonisolated enum ProgressCalculator {
             goalReached: totalSeconds >= ProgressGoal.targetSeconds
         )
     }
+
+    /// Цель завершена, когда завершённые сессии в сумме дают не меньше 10 000 часов.
+    /// Идущая сессия не учитывается: её время ещё может быть отброшено или изменено.
+    static func isGoalCompleted(completedSessionsSeconds: Int) -> Bool {
+        progress(completedSessionsSeconds: completedSessionsSeconds, activeSessionSeconds: 0).goalReached
+    }
 }
 
 nonisolated enum ProgressFormatter {

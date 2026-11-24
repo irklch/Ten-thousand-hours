@@ -199,4 +199,5 @@ private final class DuplicateStartRepository: SessionRepository {
     func updateDuration(ofSessionWithID id: UUID, to durationSeconds: Int) throws -> SessionSnapshot {
         try wrapped.updateDuration(ofSessionWithID: id, to: durationSeconds)
     }
+    func deleteAllSessions() throws { try wrapped.deleteAllSessions() }
 }
