@@ -8,6 +8,7 @@ final class TabNavigationUITests: XCTestCase {
     @MainActor
     func testSwitchingBetweenTabs() {
         let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing", "-ui-testing-reset"]
         app.launch()
 
         let homeTab = app.tabBars.buttons["Главная"]

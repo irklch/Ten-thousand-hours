@@ -9,7 +9,7 @@ final class ModelContainerFactoryTests: XCTestCase {
 
         let configuration = try XCTUnwrap(container.configurations.first)
         XCTAssertTrue(configuration.isStoredInMemoryOnly)
-        XCTAssertEqual(container.schema.entities.count, ModelContainerFactory.models.count)
+        XCTAssertEqual(container.schema.entities.map(\.name), ["Session"])
     }
 
     @MainActor

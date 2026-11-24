@@ -20,8 +20,8 @@ struct TrackingWidgetView: View {
                 default:
                     largeContent(ready)
                 }
-            case .unavailable(let message):
-                unavailableContent(message)
+            case .unavailable:
+                unavailableContent
             }
         }
         .padding(Layout.padding)
@@ -62,9 +62,9 @@ struct TrackingWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private func unavailableContent(_ message: String) -> some View {
-        // No button: tapping the widget opens the app, which prepares the data.
-        Text(verbatim: message)
+    private var unavailableContent: some View {
+        // No button and no progress: tapping the widget opens the app, which shows the error and Retry.
+        Text("Данные недоступны. Откройте приложение.")
             .appTextStyle(family == .systemSmall ? .caption : .body)
             .foregroundStyle(AppColor.secondaryText)
             .multilineTextAlignment(family == .systemSmall ? .center : .leading)

@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class Session {
+nonisolated final class Session {
     @Attribute(.unique) var id: UUID
     var startDate: Date
     var endDate: Date?

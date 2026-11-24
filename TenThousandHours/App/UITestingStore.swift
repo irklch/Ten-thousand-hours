@@ -5,6 +5,19 @@ enum UITestingStore {
     static let enableArgument = "-ui-testing"
     static let resetArgument = "-ui-testing-reset"
     static let seedHoursArgument = "-ui-testing-seed-hours"
+    /// The first N attempts to open the store fail: checks the error screen and Retry.
+    static let storageFailuresArgument = "-ui-testing-storage-failures"
+    private static var simulatedFailures = 0
+
+    static func simulateFailureIfRequested(arguments: [String] = ProcessInfo.processInfo.arguments) throws {
+        guard let index = arguments.firstIndex(of: storageFailuresArgument),
+              arguments.indices.contains(index + 1),
+              let limit = Int(arguments[index + 1]),
+              simulatedFailures < limit
+        else { return }
+        simulatedFailures += 1
+        throw SharedStoreError.appGroupUnavailable
+    }
 
     static func storeURLIfRequested(arguments: [String] = ProcessInfo.processInfo.arguments) throws -> URL? {
         guard arguments.contains(enableArgument) else { return nil }

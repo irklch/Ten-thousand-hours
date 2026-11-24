@@ -77,9 +77,9 @@ final class TrackingWidgetDisplayTests: XCTestCase {
     }
 
     func testUnavailableStateHasNoControl() {
-        let display = TrackingWidgetDisplay(state: .unavailable(.migrationPending), date: now)
+        let display = TrackingWidgetDisplay(state: .unavailable, date: now)
 
-        XCTAssertEqual(display.content, .unavailable(message: "Откройте приложение, чтобы подготовить данные"))
+        XCTAssertEqual(display.content, .unavailable)
     }
 
     func testRussianPluralForHours() {
@@ -118,7 +118,7 @@ final class TrackingTimelinePlannerTests: XCTestCase {
 
     func testUnavailableStoreRetriesLater() {
         XCTAssertEqual(
-            TrackingTimelinePlanner.reload(for: .unavailable(nil), now: now),
+            TrackingTimelinePlanner.reload(for: .unavailable, now: now),
             .after(now.addingTimeInterval(15 * 60))
         )
     }

@@ -1,6 +1,7 @@
 import Foundation
 
-final class TimerEngine {
+/// `nonisolated`: the widget, the App Intents and the concurrency tests use it outside the main actor.
+nonisolated final class TimerEngine {
     enum State: Equatable {
         case idle
         case running(startDate: Date)
@@ -20,36 +21,41 @@ final class TimerEngine {
     private(set) var state: State = .idle
 
     private let repository: any SessionRepository
-    private let coordinator: any SessionOperationCoordinator
+    private let lock: FileLockCoordinator?
     private let now: () -> Date
 
-    /// `coordinator` serializes Play/Stop across processes (the app and the widget). The check
-    /// "is there an active session" and the write that follows it run under a single lock, so two
-    /// simultaneous Plays cannot create two active sessions, and two Stops cannot finish one session twice.
+    /// `lock` serializes Play/Stop across processes (the app and the widget). The check "is there an
+    /// active session" and the write that follows it run under a single lock, so two simultaneous Plays
+    /// cannot create two active sessions, and two Stops cannot finish one session twice.
+    /// `nil` is only for stores in memory.
     init(
         repository: any SessionRepository,
-        coordinator: any SessionOperationCoordinator = InProcessOperationCoordinator(),
+        lock: FileLockCoordinator? = nil,
         now: @escaping () -> Date = Date.init
     ) {
         self.repository = repository
-        self.coordinator = coordinator
+        self.lock = lock
         self.now = now
     }
 
     nonisolated deinit {}
 
-    func restore() throws {
-        state = Self.state(for: try repository.activeSession())
+    /// Reads the timer state and the accumulated progress from the store under one lock.
+    @discardableResult
+    func restore() throws -> TrackingStatus {
+        let status = try TrackingStatus.read(from: repository, lock: lock)
+        state = status.activeSessionStartDate.map { .running(startDate: $0) } ?? .idle
+        return status
     }
 
     @discardableResult
     func start() throws -> StartResult {
-        try coordinator.perform(startLocked)
+        try FileLockCoordinator.perform(lock, startLocked)
     }
 
     @discardableResult
     func stop() throws -> StopResult {
-        try coordinator.perform(stopLocked)
+        try FileLockCoordinator.perform(lock, stopLocked)
     }
 
     private func startLocked() throws -> StartResult {
@@ -88,9 +94,5 @@ final class TimerEngine {
         case .running(let startDate):
             SessionRules.elapsedSeconds(from: startDate, to: now())
         }
-    }
-
-    private static func state(for activeSession: SessionSnapshot?) -> State {
-        activeSession.map { .running(startDate: $0.startDate) } ?? .idle
     }
 }

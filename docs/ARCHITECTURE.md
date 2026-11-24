@@ -6,7 +6,7 @@
 
 ```
 TenThousandHours/           приложение
-├── App/                    точка входа, корневой TabView, PersistenceBootstrap (выбор хранилища + миграция)
+├── App/                    точка входа (открытие хранилища, экран ошибки с «Повторить»), корневой TabView
 ├── Core/
 │   ├── Session/            SessionDuration/DateFormatter, SessionDurationInput
 │   ├── Timer/              ElapsedTimeFormatter
@@ -17,9 +17,9 @@ Shared/                     общий код приложения и Widget Ext
 ├── Session/                SessionSnapshot, SessionRules, SessionError
 ├── Timer/                  TimerEngine — Play/Stop/restore по сохранённым timestamp
 ├── Progress/               ProgressCalculator, ProgressGoal, ProgressFormatter
-├── Persistence/            @Model Session, SessionRepository + SwiftData-реализация, ModelContainerFactory,
-│                           SharedStoreLocation (App Group), StoreMigrator, SessionOperationCoordinator (flock)
-├── Tracking/               TrackingCommands, SharedTracking, StartTrackingIntent / StopTrackingIntent
+├── Persistence/            @Model Session, SessionRepository + SwiftData-реализация,
+│                           ModelContainerFactory (схема + URL стора в App Group), FileLockCoordinator (flock)
+├── Tracking/               TrackingStatus, SharedTracking, StartTrackingIntent / StopTrackingIntent
 ├── Widgets/                TrackingWidgetDisplay, TrackingTimelinePlanner, TrackingWidgetView
 ├── DesignSystem/           цвета, типографика, отступы, компоненты
 └── Localizable.xcstrings   строки (язык разработки — ru)
@@ -71,13 +71,12 @@ TenThousandHoursUITests/    UI-тесты; WidgetUITests — проверка в
 
 ## Виджеты, App Intents и App Group (этап 6)
 
-- **App Group** `group.com.irklch.TenThousandHours` (выведен из Bundle ID) подключён к приложению и к `com.irklch.TenThousandHours.Widgets`. Общий SwiftData-стор: `<App Group>/Library/Application Support/TenThousandHours.store`. Расположение всегда задаётся явно — конфигурация по умолчанию больше не используется (иначе SwiftData молча создал бы пустой стор в App Group).
-- **Миграция** (`StoreMigrator`, только приложение, под межпроцессной блокировкой): старый стор `Application Support/default.store` из песочницы приложения копируется в общий с сохранением `id`, дат и длительностей; сессии с уже существующим `id` пропускаются (повтор/прерывание не создают дублей); одна транзакция `save()`, затем сверка; маркер `LegacyStoreMigration.done` пишется только после успешной сверки. Старый стор не удаляется. При любой ошибке приложение работает на старом сторе, показывает сообщение и снимает маркер; при следующем удачном запуске локальные сессии добавляются в общий стор.
-- **Виджет без маркера** (миграция не выполнена, App Group недоступен, ошибка чтения) показывает «Откройте приложение…» без кнопки Play/Stop — фиктивного состояния нет.
-- **Межпроцессная координация.** SQLite-стор SwiftData безопасен для одновременного доступа нескольких процессов (файловые блокировки SQLite), но последовательность «проверить → записать» не атомарна между процессами, а `@MainActor`/actor работают только внутри процесса. Поэтому Play, Stop, редактирование и миграция выполняются под `flock` на файле `TenThousandHours.lock` в App Group (`FileLockCoordinator`): внутри блокировки состояние перечитывается из стора и только потом пишется. Блокировка держится миллисекунды и без точек приостановки; при падении процесса система снимает её сама; ожидание ограничено 3 с, после чего операция завершается ошибкой без изменений.
+- **Одно хранилище.** В production есть ровно одна база SwiftData: `<App Group group.com.irklch.TenThousandHours>/Library/Application Support/TenThousandHours.store`. Её URL и схему задаёт только `ModelContainerFactory`; приложение (`TrackingStore.open`) и виджет/intents (`SharedTracking`) открывают один и тот же файл — каждый процесс своим `ModelContainer`. Других баз, резервных копий и переключения между хранилищами нет. In-memory и временные файлы используются только в тестах, Preview и UI-тестах.
+- **Недоступность хранилища** (нет App Group, SwiftData не открывается). Приложение не падает и не создаёт другую базу: вместо экранов показывается «Данные недоступны» без прогресса и Play/Stop, с кнопкой «Повторить», которая заново пытается открыть тот же файл. Существующий файл не удаляется и не пересоздаётся. Виджет показывает «Данные недоступны. Откройте приложение.» без кнопки и повторяет попытку через 15 минут; контейнер в процессе виджета кэшируется только после удачного открытия.
+- **Межпроцессная координация.** SQLite-стор SwiftData безопасен для одновременного доступа нескольких процессов, но последовательность «проверить → записать» не атомарна между процессами, а `@MainActor`/actor работают только внутри процесса. Поэтому Play, Stop, редактирование длительности и чтение состояния (активная сессия + накопленный прогресс) выполняются под `flock` на файле `TenThousandHours.lock` рядом со стором (`FileLockCoordinator`). Внутри блокировки состояние перечитывается из стора и только потом пишется. Блокировка держится миллисекунды и без точек приостановки; при падении процесса система снимает её сама; ожидание ограничено 3 с, затем операция завершается ошибкой без изменений. Блокировка не реентерабельна — вложенных операций нет.
 - **Свежие данные.** `SwiftDataSessionRepository(container:)` создаёт новый `ModelContext` на каждую операцию, поэтому изменения другого процесса видны сразу. Приложение перечитывает стор при возврате в `.active` (`restore()`), без polling.
-- **App Intents** `StartTrackingIntent` / `StopTrackingIntent` выполняются в процессе виджета через тот же `TimerEngine` (`TrackingCommands`), без открытия приложения. Повторный Play/Stop ничего не меняют, короткие сессии отбрасываются по `SessionRules`.
-- **Обновление виджетов.** `WidgetCenter.reloadTimelines(ofKind:)` после Play/Stop/редактирования в приложении, после intents и после миграции. Timeline: таймер остановлен — одна запись, `.never`; таймер идёт — записи раз в минуту на час вперёд, `.atEnd`; стор недоступен — повтор через 15 минут. Секундного таймера в виджете нет.
+- **App Intents** `StartTrackingIntent` / `StopTrackingIntent` выполняются в процессе виджета через тот же `TimerEngine`, без открытия приложения. Повторный Play/Stop ничего не меняют, короткие сессии отбрасываются по `SessionRules`. `TimerEngine`, репозиторий и модель `nonisolated`, поэтому одна и та же логика работает и в приложении, и в виджете, и в тестах с настоящей параллельностью.
+- **Обновление виджетов.** `WidgetCenter.reloadTimelines(ofKind:)` после Play/Stop/редактирования в приложении и после intents. Timeline: таймер остановлен — одна запись, `.never`; таймер идёт — записи раз в минуту на час вперёд, `.atEnd`; стор недоступен — повтор через 15 минут. Секундного таймера в виджете нет.
 - **UI виджетов** по Figma: Small — кнопка Play/Stop по центру; Large — процент (80 pt Light), часы, кнопка справа внизу; отступ 24 pt, `containerBackground`, `Button(intent:)`. В tinted-режимах iOS 18+ кнопка рисуется монохромной (иконка вырезана из круга).
 
 ## Подготовка к расширениям

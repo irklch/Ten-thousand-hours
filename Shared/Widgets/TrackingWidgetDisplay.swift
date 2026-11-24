@@ -3,9 +3,9 @@ import Foundation
 /// Widget state read from the shared store.
 nonisolated enum TrackingWidgetState: Equatable, Sendable {
     case ready(TrackingStatus)
-    /// The store cannot be read (no migration yet, App Group unavailable, read error).
-    /// The widget then shows no Play/Stop at all instead of a made-up state.
-    case unavailable(SharedStoreError?)
+    /// The store cannot be read (App Group unavailable, SwiftData error). The widget then shows no
+    /// Play/Stop and no progress instead of a made-up zero state.
+    case unavailable
 }
 
 /// Text and state of the widget at a given moment. Formulas and formatting are the shared
@@ -13,7 +13,7 @@ nonisolated enum TrackingWidgetState: Equatable, Sendable {
 nonisolated struct TrackingWidgetDisplay: Equatable, Sendable {
     enum Content: Equatable, Sendable {
         case ready(Ready)
-        case unavailable(message: String)
+        case unavailable
     }
 
     struct Ready: Equatable, Sendable {
@@ -43,10 +43,8 @@ nonisolated struct TrackingWidgetDisplay: Equatable, Sendable {
                 percentAccessibilityLabel: ProgressFormatter.spokenPercent(progress),
                 hoursAccessibilityLabel: ProgressFormatter.spokenHours(progress)
             ))
-        case .unavailable(let error):
-            content = .unavailable(
-                message: error?.errorDescription ?? String(localized: "Не удалось загрузить данные. Откройте приложение.")
-            )
+        case .unavailable:
+            content = .unavailable
         }
     }
 }
@@ -58,7 +56,7 @@ nonisolated struct TrackingWidgetDisplay: Equatable, Sendable {
 /// - Timer running: an entry every minute for an hour ahead (0,01 % is 36 seconds, so the percent
 ///   moves noticeably), then a new timeline. The system may show updates with a delay; continuous
 ///   per-second updating is not promised.
-/// - Store unavailable: retry in 15 minutes, in addition to the reload after the app's migration.
+/// - Store unavailable: retry in 15 minutes.
 nonisolated enum TrackingTimelinePlanner {
     static let runningStep: TimeInterval = 60
     static let runningEntryCount = 60
@@ -92,14 +90,12 @@ nonisolated enum TrackingTimelinePlanner {
 }
 
 extension SharedTracking {
-    /// The widget state. The error is not swallowed: it turns into an explicit `unavailable` state.
-    static func widgetState(location: SharedStoreLocation? = nil) -> TrackingWidgetState {
+    /// The widget state. A read error turns into an explicit `unavailable` state; it is not hidden.
+    static func widgetState() -> TrackingWidgetState {
         do {
-            return .ready(try commands(location: location).status())
-        } catch let error as SharedStoreError {
-            return .unavailable(error)
+            return .ready(try status())
         } catch {
-            return .unavailable(nil)
+            return .unavailable
         }
     }
 }

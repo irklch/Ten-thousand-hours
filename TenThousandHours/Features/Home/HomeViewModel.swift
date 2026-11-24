@@ -13,7 +13,7 @@ struct HomeViewModel {
     var filledDotCount: Int { progress.filledDotCount }
 
     var errorMessage: String? {
-        guard let error = store.error ?? store.storageNotice else { return nil }
+        guard let error = store.error else { return nil }
         if let sessionError = error as? SessionError {
             return sessionError.errorDescription
         }

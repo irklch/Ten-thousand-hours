@@ -11,7 +11,7 @@ nonisolated struct StartTrackingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        try SharedTracking.commands().start()
+        try SharedTracking.engine().start()
         WidgetTimelineReloader.reload()
         return .result()
     }
@@ -27,7 +27,7 @@ nonisolated struct StopTrackingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        try SharedTracking.commands().stop()
+        try SharedTracking.engine().stop()
         WidgetTimelineReloader.reload()
         return .result()
     }

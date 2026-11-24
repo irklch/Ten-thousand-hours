@@ -1,17 +1,16 @@
 import Foundation
 import SwiftData
 
-final class SwiftDataSessionRepository: SessionRepository {
+nonisolated final class SwiftDataSessionRepository: SessionRepository {
     private let makeContext: () -> ModelContext
 
-    /// Works through one context. Suitable when only this process writes to the store.
+    /// One shared context: only for stores in memory (tests, Preview).
     init(context: ModelContext) {
         makeContext = { context }
     }
 
     /// Every operation gets a new `ModelContext` and therefore reads the current contents of the store,
-    /// including changes from another process (a Play/Stop from the widget). A long-lived context could
-    /// return objects it has already loaded with stale values.
+    /// including changes from another process (a Play/Stop from the widget).
     init(container: ModelContainer) {
         makeContext = {
             let context = ModelContext(container)
