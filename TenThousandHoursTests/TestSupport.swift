@@ -114,15 +114,15 @@ func makeTemporaryDirectory() throws -> URL {
     return directory
 }
 
-/// A store file as the app and the widget see it. Each "participant" gets its own `ModelContainer`
-/// and its own `FileLockCoordinator` on the shared lock file. This is all inside one test process:
-/// it reproduces the separate containers and contexts, but it is not a test of real separate processes.
+/// Файл хранилища так, как его видят приложение и виджет. Каждый «участник» получает свой `ModelContainer`
+/// и свой `FileLockCoordinator` на общем файле блокировки. Всё это внутри одного тестового процесса:
+/// раздельные контейнеры и контексты воспроизводятся, но это не тест настоящих отдельных процессов.
 nonisolated struct SharedStoreFixture: Sendable {
     let storeURL: URL
 
     init() throws {
         storeURL = try makeTemporaryDirectory().appendingPathComponent("TenThousandHours.store")
-        // The store is created in advance, as the app does on first launch.
+        // Хранилище создаётся заранее, как это делает приложение при первом запуске.
         _ = try ModelContainerFactory.makeContainer(storeURL: storeURL)
     }
 
@@ -130,7 +130,7 @@ nonisolated struct SharedStoreFixture: Sendable {
         FileLockCoordinator(lockFileURL: ModelContainerFactory.lockFileURL(forStoreAt: storeURL))
     }
 
-    /// A separate participant (widget, intent): its own container on the same file, the same `TimerEngine`.
+    /// Отдельный участник (виджет, intent): свой контейнер на том же файле, тот же `TimerEngine`.
     func engine(now: @escaping () -> Date = Date.init) throws -> TimerEngine {
         TimerEngine(repository: try repository(), lock: lock, now: now)
     }

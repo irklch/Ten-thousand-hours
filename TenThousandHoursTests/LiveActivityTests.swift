@@ -41,7 +41,7 @@ final class LiveActivityPlanTests: XCTestCase {
 }
 
 final class TrackingStoreLiveActivityTests: XCTestCase {
-    /// The store reports the session that is in SwiftData after each operation; the Live Activity follows it.
+    /// После каждой операции store сообщает сессию, которая лежит в SwiftData; Live Activity следует за ней.
     @MainActor
     func testActiveSessionIsReportedAfterRestorePlayAndStop() throws {
         let storage = try TestStorage.inMemory()
@@ -68,7 +68,7 @@ final class TrackingStoreLiveActivityTests: XCTestCase {
         XCTAssertNil(reported[3] ?? nil)
     }
 
-    /// If the store fails, nothing is reported: the Live Activity is not changed by a failed operation.
+    /// Если store падает, ничего не сообщается: неудачная операция не меняет Live Activity.
     @MainActor
     func testFailedPlayReportsNothing() throws {
         let repository = FailingSessionRepository(wrapping: try TestStorage.inMemory().repository)

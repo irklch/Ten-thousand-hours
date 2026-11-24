@@ -1,14 +1,14 @@
 import Foundation
 
-/// Timer and progress state as stored in the store.
+/// Состояние таймера и прогресса в том виде, в каком оно лежит в хранилище.
 nonisolated struct TrackingStatus: Equatable, Sendable {
     let activeSessionStartDate: Date?
     let completedSessionsSeconds: Int
 
     var isRunning: Bool { activeSessionStartDate != nil }
 
-    /// Both values are read under one lock, so a concurrent Stop cannot leave the widget showing a stopped
-    /// timer with progress from before the session was saved.
+    /// Оба значения читаются под одной блокировкой, поэтому параллельный Stop не оставит виджет с остановленным
+    /// таймером и прогрессом, посчитанным до сохранения сессии.
     static func read(from repository: any SessionRepository, lock: FileLockCoordinator?) throws -> TrackingStatus {
         try FileLockCoordinator.perform(lock) {
             TrackingStatus(

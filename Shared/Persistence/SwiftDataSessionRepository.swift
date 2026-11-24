@@ -4,13 +4,13 @@ import SwiftData
 nonisolated final class SwiftDataSessionRepository: SessionRepository {
     private let makeContext: () -> ModelContext
 
-    /// One shared context: only for stores in memory (tests, Preview).
+    /// Один общий контекст: только для хранилищ в памяти (тесты, Preview).
     init(context: ModelContext) {
         makeContext = { context }
     }
 
-    /// Every operation gets a new `ModelContext` and therefore reads the current contents of the store,
-    /// including changes from another process (a Play/Stop from the widget).
+    /// Каждая операция получает новый `ModelContext` и поэтому читает актуальное содержимое хранилища,
+    /// включая изменения из другого процесса (Play/Stop из виджета).
     init(container: ModelContainer) {
         makeContext = {
             let context = ModelContext(container)

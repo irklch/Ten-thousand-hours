@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Shown instead of the app when the store cannot be opened (App Group unavailable, SwiftData error).
-/// It has no progress and no Play/Stop: without the store they would show a made-up state.
+/// Показывается вместо приложения, когда хранилище не открывается (App Group недоступна, ошибка SwiftData).
+/// Здесь нет прогресса и Play/Stop: без хранилища они показали бы выдуманное состояние.
 struct StorageUnavailableView: View {
     let error: (any Error)?
     let retry: () -> Void

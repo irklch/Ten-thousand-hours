@@ -1,6 +1,6 @@
 import XCTest
 
-/// The store is unavailable at launch: an error screen with no progress and no Play/Stop; Retry opens the app.
+/// Хранилище недоступно при запуске: экран ошибки без прогресса и без Play/Stop; Retry открывает приложение.
 final class StorageUnavailableUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false

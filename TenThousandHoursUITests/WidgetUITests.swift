@@ -1,10 +1,10 @@
 import XCTest
 
-/// Real widget check on the home screen (Springboard): add the Small widget, Play/Stop from the widget,
-/// and sync with the app (state, history, progress).
+/// Проверка настоящего виджета на домашнем экране (Springboard): добавить Small-виджет, Play/Stop из виджета
+/// и синхронизация с приложением (состояние, история, прогресс).
 ///
-/// It depends on the Springboard UI of a particular iOS version and works with the real shared store
-/// on the simulator, so it runs only on request:
+/// Зависит от UI Springboard конкретной версии iOS и работает с настоящим общим хранилищем
+/// на симуляторе, поэтому запускается только по запросу:
 /// `TEST_RUNNER_RUN_WIDGET_UI_TESTS=1 xcodebuild test … -only-testing:TenThousandHoursUITests/WidgetUITests`.
 final class WidgetUITests: XCTestCase {
     @MainActor
@@ -82,7 +82,7 @@ final class WidgetUITests: XCTestCase {
         addWidget(page: 1)
     }
 
-    /// Adds the widget through the gallery: page 1 is Small, page 2 is Large.
+    /// Добавляет виджет через галерею: страница 1 — Small, страница 2 — Large.
     @MainActor
     private func addWidget(page: Int) {
         XCUIDevice.shared.press(.home)

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ci-simulator-id.sh [newest|oldest]
-# newest: newest iOS runtime not newer than the SDK; oldest: oldest runtime >= deployment target.
+# Использование: ci-simulator-id.sh [newest|oldest]
+# newest: самый новый рантайм iOS не новее SDK; oldest: самый старый рантайм >= deployment target.
 mode="${1:-newest}"
 sdk_version=$(xcrun --sdk iphonesimulator --show-sdk-version)
 

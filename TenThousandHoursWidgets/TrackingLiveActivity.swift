@@ -3,8 +3,8 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-/// Live Activity on the Lock Screen and in the Dynamic Island. Figma has no mockup for it, so it is a
-/// plain native layout in the app's black-and-white style. Only Stop: the app has no Pause.
+/// Live Activity на экране блокировки и в Dynamic Island. Макета в Figma для неё нет, поэтому это
+/// простая нативная вёрстка в чёрно-белом стиле приложения. Только Stop: паузы в приложении нет.
 struct TrackingLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TrackingActivityAttributes.self) { context in
@@ -68,8 +68,8 @@ private struct LockScreenView: View {
     }
 }
 
-/// Duration from the saved `startDate`, counted by the system: no timer in the app and no
-/// accumulated error. The hours are not capped at 24 (`1 day` is shown as `24:00:00`).
+/// Длительность от сохранённого `startDate`, её считает система: ни таймера в приложении, ни
+/// накопленной погрешности. Часы не ограничены 24 (`1 day` показывается как `24:00:00`).
 private struct SessionDuration: View {
     let startDate: Date
 
@@ -88,10 +88,10 @@ private struct TrackingSymbol: View {
     }
 }
 
-/// Runs the same `StopTrackingIntent` as the widgets: one Stop implementation for every control.
+/// Запускает тот же `StopTrackingIntent`, что и виджеты: одна реализация Stop для всех элементов управления.
 private struct StopButton: View {
     let diameter: CGFloat
-    /// The Dynamic Island is always black; the Lock Screen card has the app's white background.
+    /// Dynamic Island всегда чёрный; у карточки на экране блокировки белый фон приложения.
     let onDark: Bool
 
     var body: some View {

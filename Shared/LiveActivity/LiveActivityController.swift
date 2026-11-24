@@ -2,19 +2,19 @@ import ActivityKit
 import Foundation
 import os
 
-/// Brings the app's Live Activities into line with the active session in SwiftData.
-/// It has no state of its own: every call reads `Activity.activities` and decides again.
-/// `nonisolated`: `Activity` is not `Sendable`, so it is read and ended in one isolation domain.
+/// Приводит Live Activities приложения в соответствие с активной сессией в SwiftData.
+/// Своего состояния нет: каждый вызов читает `Activity.activities` и решает заново.
+/// `nonisolated`: `Activity` не `Sendable`, поэтому она читается и завершается в одном домене изоляции.
 nonisolated enum LiveActivityController {
     private static let logger = Logger(subsystem: "com.irklch.TenThousandHours", category: "LiveActivity")
 
-    /// - No active session: end every activity.
-    /// - Active session: keep one activity for this session, end the others (duplicates, stale ones),
-    ///   and request a new one if none is left.
+    /// - Нет активной сессии: завершить все activity.
+    /// - Есть активная сессия: оставить одну activity для этой сессии, завершить остальные (дубли, устаревшие)
+    ///   и запросить новую, если не осталось ни одной.
     ///
-    /// ActivityKit can refuse a request (Live Activities are turned off, the system limit is reached, or the
-    /// call came from a process that may not start activities). The session is already saved, so the
-    /// refusal is logged and the timer keeps working in the app and in the widgets.
+    /// ActivityKit может отказать в запросе (Live Activities выключены, достигнут системный лимит или
+    /// вызов пришёл из процесса, которому нельзя запускать activity). Сессия уже сохранена, поэтому
+    /// отказ записывается в лог, а таймер продолжает работать в приложении и в виджетах.
     static func sync(activeSession: SessionSnapshot?) async {
         let activities = Activity<TrackingActivityAttributes>.activities.filter {
             $0.activityState == .active || $0.activityState == .stale
@@ -31,8 +31,8 @@ nonisolated enum LiveActivityController {
         }
     }
 
-    /// The session was saved, but its state could not be read back to update the Live Activity.
-    /// The next launch or return to the app reconciles it again.
+    /// Сессия сохранена, но её состояние не удалось прочитать обратно, чтобы обновить Live Activity.
+    /// Следующий запуск или возврат в приложение снова приведёт её в соответствие.
     static func logSyncFailure(_ error: any Error) {
         logger.error("Live Activity sync skipped: \(error.localizedDescription, privacy: .public)")
     }
@@ -53,7 +53,7 @@ nonisolated enum LiveActivityController {
     }
 }
 
-/// What to do with the existing activities. A pure function, kept apart so it can be tested without ActivityKit.
+/// Что делать с существующими activity. Чистая функция, вынесена отдельно, чтобы её можно было тестировать без ActivityKit.
 nonisolated struct LiveActivityPlan: Equatable {
     struct ExistingActivity: Equatable {
         let id: String

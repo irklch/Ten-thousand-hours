@@ -48,7 +48,7 @@ nonisolated enum ProgressFormatter {
         return String(localized: "Прогресс: \(percent(progress)). Завершено часов: \(hours) из \(goal)")
     }
 
-    /// «Выполнено 12,45 процента». A number with a fractional part takes the genitive singular.
+    /// «Выполнено 12,45 процента». Число с дробной частью требует родительного падежа единственного числа.
     static func spokenPercent(_ progress: ProgressSnapshot) -> String {
         let value = String(percent(progress).dropLast())
         return String(localized: "Выполнено \(value) процента")

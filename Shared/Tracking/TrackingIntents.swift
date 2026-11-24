@@ -1,9 +1,9 @@
 import AppIntents
 import Foundation
 
-/// Play from the widget. `LiveActivityIntent`: the system runs it in the app's process (in the background,
-/// the source file is in both targets), where ActivityKit may start a Live Activity.
-/// A repeated Play while the timer is running does not create a new session (`TimerEngine.start`).
+/// Play из виджета. `LiveActivityIntent`: система запускает его в процессе приложения (в фоне,
+/// исходный файл входит в оба таргета), где ActivityKit может запустить Live Activity.
+/// Повторный Play при идущем таймере не создаёт новую сессию (`TimerEngine.start`).
 nonisolated struct StartTrackingIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Начать отслеживание времени"
     static let description = IntentDescription("Запускает таймер 10 000 Hours")
@@ -18,8 +18,8 @@ nonisolated struct StartTrackingIntent: LiveActivityIntent {
     }
 }
 
-/// Stop from the widget, the Lock Screen and the Dynamic Island. Sessions shorter than a minute are discarded by the existing rules.
-/// Stop with no active session changes nothing.
+/// Stop из виджета, с экрана блокировки и из Dynamic Island. Сессии короче минуты отбрасываются по существующим правилам.
+/// Stop без активной сессии ничего не меняет.
 nonisolated struct StopTrackingIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Остановить отслеживание времени"
     static let description = IntentDescription("Останавливает таймер 10 000 Hours")

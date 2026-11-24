@@ -2,7 +2,7 @@ import SwiftData
 import XCTest
 @testable import TenThousandHours
 
-/// The single store: creation, reopening, unavailability and recovery.
+/// Единое хранилище: создание, повторное открытие, недоступность и восстановление.
 final class SharedStoreTests: XCTestCase {
     private final class NoAppGroupFileManager: FileManager, @unchecked Sendable {
         override func containerURL(forSecurityApplicationGroupIdentifier groupIdentifier: String) -> URL? { nil }
@@ -94,7 +94,7 @@ final class SharedStoreTests: XCTestCase {
     }
 }
 
-/// The logic of `StartTrackingIntent` / `StopTrackingIntent`: the intents call `TimerEngine` over the shared store.
+/// Логика `StartTrackingIntent` / `StopTrackingIntent`: intents вызывают `TimerEngine` поверх общего хранилища.
 final class TrackingIntentLogicTests: XCTestCase {
     @MainActor
     func testPlayCreatesActiveSession() throws {

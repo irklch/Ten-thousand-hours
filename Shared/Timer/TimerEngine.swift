@@ -1,6 +1,6 @@
 import Foundation
 
-/// `nonisolated`: the widget, the App Intents and the concurrency tests use it outside the main actor.
+/// `nonisolated`: виджет, App Intents и тесты конкурентности используют его вне main actor.
 nonisolated final class TimerEngine {
     enum State: Equatable {
         case idle
@@ -24,10 +24,10 @@ nonisolated final class TimerEngine {
     private let lock: FileLockCoordinator?
     private let now: () -> Date
 
-    /// `lock` serializes Play/Stop across processes (the app and the widget). The check "is there an
-    /// active session" and the write that follows it run under a single lock, so two simultaneous Plays
-    /// cannot create two active sessions, and two Stops cannot finish one session twice.
-    /// `nil` is only for stores in memory.
+    /// `lock` упорядочивает Play/Stop между процессами (приложение и виджет). Проверка «есть ли
+    /// активная сессия» и следующая за ней запись выполняются под одной блокировкой, поэтому два одновременных Play
+    /// не создадут две активные сессии, а два Stop не завершат одну сессию дважды.
+    /// `nil` — только для хранилищ в памяти.
     init(
         repository: any SessionRepository,
         lock: FileLockCoordinator? = nil,
@@ -40,7 +40,7 @@ nonisolated final class TimerEngine {
 
     nonisolated deinit {}
 
-    /// Reads the timer state and the accumulated progress from the store under one lock.
+    /// Читает состояние таймера и накопленный прогресс из хранилища под одной блокировкой.
     @discardableResult
     func restore() throws -> TrackingStatus {
         let status = try TrackingStatus.read(from: repository, lock: lock)
