@@ -5,6 +5,7 @@ import WidgetKit
 struct TenThousandHoursWidgetsBundle: WidgetBundle {
     var body: some Widget {
         TrackingWidget()
+        TrackingLiveActivity()
     }
 }
 

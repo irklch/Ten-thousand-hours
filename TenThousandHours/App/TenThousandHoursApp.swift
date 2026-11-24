@@ -57,7 +57,10 @@ extension TrackingStore {
         let store = TrackingStore(
             repository: repository,
             lock: FileLockCoordinator(lockFileURL: ModelContainerFactory.lockFileURL(forStoreAt: storeURL)),
-            onSessionsChanged: WidgetTimelineReloader.reload
+            onSessionsChanged: WidgetTimelineReloader.reload,
+            onActiveSessionRead: { session in
+                Task { await LiveActivityController.sync(activeSession: session) }
+            }
         )
         store.restore()
         if let error = store.error {

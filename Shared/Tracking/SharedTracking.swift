@@ -17,6 +17,19 @@ enum SharedTracking {
         return try TrackingStatus.read(from: repository, lock: lock)
     }
 
+    /// After a saved Play/Stop: the widgets get a reload request, and the Live Activity is brought into line
+    /// with what SwiftData now holds. If the store cannot be read, the error surfaces from `perform`.
+    static func didChange() async {
+        WidgetTimelineReloader.reload()
+        do {
+            let (repository, lock) = try storage()
+            let active = try FileLockCoordinator.perform(lock) { try repository.activeSession() }
+            await LiveActivityController.sync(activeSession: active)
+        } catch {
+            LiveActivityController.logSyncFailure(error)
+        }
+    }
+
     /// The container is cached only after a successful open: if the store is temporarily unavailable,
     /// the next call tries again.
     private static func storage() throws -> (SwiftDataSessionRepository, FileLockCoordinator) {

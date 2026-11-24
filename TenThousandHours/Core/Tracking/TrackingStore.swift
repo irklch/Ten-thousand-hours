@@ -19,6 +19,7 @@ final class TrackingStore {
     @ObservationIgnored private let repository: any SessionRepository
     @ObservationIgnored private let lock: FileLockCoordinator?
     @ObservationIgnored private let onSessionsChanged: () -> Void
+    @ObservationIgnored private let onActiveSessionRead: (SessionSnapshot?) -> Void
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
     @ObservationIgnored private var refreshClientCount = 0
@@ -28,15 +29,19 @@ final class TrackingStore {
     ///   - lock: the same cross-process lock the widget uses; `nil` only for stores in memory.
     ///   - onSessionsChanged: called after Play, Stop and a duration edit are saved successfully
     ///     (in the app this reloads the widget timeline).
+    ///   - onActiveSessionRead: called with the active session from the store after a successful restore,
+    ///     Play and Stop (in the app this reconciles the Live Activity).
     init(
         repository: any SessionRepository,
         lock: FileLockCoordinator? = nil,
         onSessionsChanged: @escaping () -> Void = {},
+        onActiveSessionRead: @escaping (SessionSnapshot?) -> Void = { _ in },
         now: @escaping () -> Date = Date.init
     ) {
         self.repository = repository
         self.lock = lock
         self.onSessionsChanged = onSessionsChanged
+        self.onActiveSessionRead = onActiveSessionRead
         self.now = now
         self.engine = TimerEngine(repository: repository, lock: lock, now: now)
     }
@@ -47,6 +52,7 @@ final class TrackingStore {
         perform {
             completedSessionsSeconds = try engine.restore().completedSessionsSeconds
             sessionsRevision += 1
+            try reportActiveSession()
         }
     }
 
@@ -59,6 +65,7 @@ final class TrackingStore {
                 onSessionsChanged()
             }
             completedSessionsSeconds = try engine.restore().completedSessionsSeconds
+            try reportActiveSession()
         }
     }
 
@@ -70,7 +77,12 @@ final class TrackingStore {
             if result != .notRunning {
                 onSessionsChanged()
             }
+            try reportActiveSession()
         }
+    }
+
+    private func reportActiveSession() throws {
+        onActiveSessionRead(try FileLockCoordinator.perform(lock) { try repository.activeSession() })
     }
 
     func completedSessions() throws -> [SessionSnapshot] {
