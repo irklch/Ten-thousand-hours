@@ -63,22 +63,24 @@ extension TrackingStore {
     ) throws -> TrackingStore {
         let repository = SwiftDataSessionRepository(container: try ModelContainerFactory.makeContainer(storeURL: storeURL))
         try seed(repository)
+        let lock = FileLockCoordinator(lockFileURL: ModelContainerFactory.lockFileURL(forStoreAt: storeURL))
         let store = TrackingStore(
             repository: repository,
-            lock: FileLockCoordinator(lockFileURL: ModelContainerFactory.lockFileURL(forStoreAt: storeURL)),
+            lock: lock,
             preferences: preferences,
             onSessionsChanged: WidgetTimelineReloader.reload,
             onStateRead: { state in
-                Task { await SharedTracking.syncSystemState(state) }
+                SharedTracking.syncSystemState(state)
             },
             onTimerStarted: {
                 guard requestsNotificationPermission else { return }
                 // Разрешение на напоминания спрашиваем после Play: в этот момент понятно, зачем они нужны.
-                // Системный запрос показывается один раз; после ответа напоминания планируются заново
-                // (таймер только что запущен, значит идёт, а цель не завершена — иначе Play был бы отклонён).
+                // Системный запрос показывается один раз; после ответа состояние перечитывается из хранилища
+                // (пока открыт запрос, таймер могли остановить из виджета) и проходит через общую очередь синхронизации.
                 Task {
                     await DailyReminderScheduler.requestAuthorizationIfNeeded()
-                    await DailyReminderScheduler.reschedule(isRunning: true, isGoalCompleted: false)
+                    guard let state = try? TrackingSyncState.read(from: repository, lock: lock) else { return }
+                    await SharedTracking.syncSystemState(state).value
                 }
             }
         )

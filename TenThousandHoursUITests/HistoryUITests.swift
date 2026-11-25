@@ -38,10 +38,14 @@ final class HistoryUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Длительность"].waitForExistence(timeout: 10))
     }
 
+    /// Поля выровнены по правому краю: касание по центру ставит курсор перед числом, а `doubleTap` выделяет его
+    /// не всегда — отсюда прежняя нестабильность («39» вместо «3»). Касание у правого края ставит курсор
+    /// после последней цифры, после чего старое значение стирается известным числом Backspace.
     @MainActor
     private func replaceText(in field: XCUIElement, with text: String) {
-        field.doubleTap()
-        field.typeText(text)
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+        let current = field.value as? String ?? ""
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count) + text)
         XCTAssertEqual(field.value as? String, text)
     }
 

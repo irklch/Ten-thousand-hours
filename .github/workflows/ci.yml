@@ -35,34 +35,17 @@ jobs:
             -sdk iphonesimulator \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Build and test
+      # Обычный PR: только unit-тесты. Полный набор (UI-тесты, старейший iOS, Release-сборка) —
+      # ручной workflow full-regression.yml.
+      - name: Unit tests
         run: |
           set -o pipefail
           xcodebuild test \
             -project Ten-thousand-hours.xcodeproj \
             -scheme TenThousandHours \
             -destination "id=$SIMULATOR_ID" \
-            -resultBundlePath TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO
-
-      - name: Select oldest simulator
-        run: |
-          oldest_id=$(./scripts/ci-simulator-id.sh oldest)
-          if [[ "$oldest_id" == "$SIMULATOR_ID" ]]; then
-            echo "::notice::Only one iOS runtime is available; skipping the oldest-runtime unit tests"
-          fi
-          echo "OLDEST_SIMULATOR_ID=$oldest_id" >> "$GITHUB_ENV"
-
-      - name: Unit tests on oldest iOS runtime
-        if: env.OLDEST_SIMULATOR_ID != env.SIMULATOR_ID
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -project Ten-thousand-hours.xcodeproj \
-            -scheme TenThousandHours \
-            -destination "id=$OLDEST_SIMULATOR_ID" \
             -only-testing:TenThousandHoursTests \
-            -resultBundlePath OldestTestResults.xcresult \
+            -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Upload test results
@@ -72,4 +55,3 @@ jobs:
           name: TestResults
           path: |
             TestResults.xcresult
-            OldestTestResults.xcresult

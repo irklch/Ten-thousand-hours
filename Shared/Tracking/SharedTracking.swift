@@ -23,20 +23,28 @@ enum SharedTracking {
         WidgetTimelineReloader.reload()
         do {
             let (repository, lock) = try storage()
-            await syncSystemState(try TrackingSyncState.read(from: repository, lock: lock))
+            await syncSystemState(try TrackingSyncState.read(from: repository, lock: lock)).value
         } catch {
             LiveActivityController.logSyncFailure(error)
         }
     }
 
     /// Общий для приложения и intents шаг: Live Activity и напоминания следуют за состоянием из хранилища.
-    static func syncSystemState(_ state: TrackingSyncState) async {
-        await LiveActivityController.sync(activeSession: state.activeSession)
-        await DailyReminderScheduler.reschedule(
-            isRunning: state.activeSession != nil,
-            isGoalCompleted: state.isGoalCompleted
-        )
+    /// Вызовы выполняются строго по очереди (`SerialTaskQueue`): при быстрых Play/Stop более старое
+    /// состояние не может примениться после более нового — ни запросить activity для уже остановленной
+    /// сессии, ни вернуть отменённые напоминания. Постановка в очередь синхронная — сразу после чтения состояния.
+    @discardableResult
+    static func syncSystemState(_ state: TrackingSyncState) -> Task<Void, Never> {
+        systemStateQueue.enqueue {
+            await LiveActivityController.sync(activeSession: state.activeSession)
+            await DailyReminderScheduler.reschedule(
+                isRunning: state.activeSession != nil,
+                isGoalCompleted: state.isGoalCompleted
+            )
+        }
     }
+
+    private static let systemStateQueue = SerialTaskQueue()
 
     /// Контейнер кэшируется только после успешного открытия: если хранилище временно недоступно,
     /// следующий вызов попробует снова.
@@ -59,5 +67,22 @@ nonisolated enum TrackingWidgetKind {
 nonisolated enum WidgetTimelineReloader {
     static func reload() {
         WidgetCenter.shared.reloadTimelines(ofKind: TrackingWidgetKind.tracking)
+    }
+}
+
+/// Выполняет асинхронные операции по одной в порядке вызова `enqueue`: каждая следующая ждёт завершения предыдущей.
+/// Постановка в очередь синхронная, поэтому порядок операций совпадает с порядком чтений состояния из хранилища.
+final class SerialTaskQueue {
+    private var last: Task<Void, Never>?
+
+    @discardableResult
+    func enqueue(_ operation: @escaping () async -> Void) -> Task<Void, Never> {
+        let previous = last
+        let current = Task {
+            await previous?.value
+            await operation()
+        }
+        last = current
+        return current
     }
 }

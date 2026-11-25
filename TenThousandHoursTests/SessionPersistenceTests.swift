@@ -129,4 +129,25 @@ final class SessionPersistenceTests: XCTestCase {
             XCTAssertEqual(error as? SessionError, .sessionNotFound)
         }
     }
+
+    /// Две сессии, отредактированные до максимального значения поля «Часы», не должны ронять приложение при подсчёте суммы.
+    @MainActor
+    func testTotalOfHugeEditedDurationsDoesNotOverflow() throws {
+        let storage = try TestStorage.inMemory()
+        let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let maxEditable = try XCTUnwrap(SessionDurationInput(hours: String(Int.max / 3_600), minutes: "0").durationSeconds)
+        for offset in 0..<2 {
+            let sessionStart = start.addingTimeInterval(Double(offset) * 1_000)
+            let session = try storage.repository.createActiveSession(startDate: sessionStart)
+            _ = try storage.repository.finishActiveSession(endDate: sessionStart.addingTimeInterval(600), durationSeconds: 600)
+            _ = try storage.repository.updateDuration(ofSessionWithID: session.id, to: maxEditable)
+        }
+
+        XCTAssertEqual(try storage.repository.totalCompletedDurationSeconds(), .max)
+        let store = TrackingStore(repository: storage.repository, now: TestClock().provider())
+        store.restore()
+        XCTAssertNil(store.error)
+        XCTAssertTrue(store.isGoalCompleted)
+        XCTAssertEqual(store.progress.filledDotCount, 10_000)
+    }
 }

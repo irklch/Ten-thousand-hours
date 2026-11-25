@@ -16,7 +16,7 @@ nonisolated struct ProgressSnapshot: Equatable, Sendable {
 
 nonisolated enum ProgressCalculator {
     static func progress(completedSessionsSeconds: Int, activeSessionSeconds: Int) -> ProgressSnapshot {
-        let totalSeconds = max(0, completedSessionsSeconds) + max(0, activeSessionSeconds)
+        let totalSeconds = saturatingSum(max(0, completedSessionsSeconds), max(0, activeSessionSeconds))
         let completedHours = totalSeconds / ProgressGoal.secondsPerHour
         let percent = Double(totalSeconds) / Double(ProgressGoal.targetSeconds) * 100
 
@@ -27,6 +27,13 @@ nonisolated enum ProgressCalculator {
             filledDotCount: min(completedHours, ProgressGoal.targetHours),
             goalReached: totalSeconds >= ProgressGoal.targetSeconds
         )
+    }
+
+    /// Сумма длительностей без переполнения `Int`: отредактированные сессии могут быть очень длинными,
+    /// а сумма выше `Int.max` всё равно означает выполненную цель.
+    static func saturatingSum(_ lhs: Int, _ rhs: Int) -> Int {
+        let (sum, overflow) = lhs.addingReportingOverflow(rhs)
+        return overflow ? (rhs > 0 ? .max : .min) : sum
     }
 
     /// Цель завершена, когда завершённые сессии в сумме дают не меньше 10 000 часов.
