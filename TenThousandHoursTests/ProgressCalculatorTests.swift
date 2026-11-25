@@ -94,4 +94,15 @@ final class ProgressCalculatorTests: XCTestCase {
         XCTAssertEqual(ProgressFormatter.hours(progress(1_245 * 3_600 + 3_599)), "1\u{00A0}245 / 10\u{00A0}000 ч")
         XCTAssertEqual(ProgressFormatter.hours(progress(40_000_000)), "11\u{00A0}111 / 10\u{00A0}000 ч")
     }
+
+    func testHugeDurationsDoNotOverflow() {
+        let result = progress(.max, active: 3_600)
+
+        XCTAssertEqual(result.totalSeconds, .max)
+        XCTAssertEqual(result.progressPercent, 100)
+        XCTAssertEqual(result.filledDotCount, 10_000)
+        XCTAssertEqual(ProgressFormatter.percent(result), "100,00%")
+        XCTAssertEqual(ProgressCalculator.saturatingSum(.max, .max), .max)
+        XCTAssertEqual(ProgressCalculator.saturatingSum(2, 3), 5)
+    }
 }

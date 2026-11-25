@@ -114,15 +114,6 @@ final class TrackingStore {
         isCelebrationPending = false
     }
 
-    /// Передаёт состояние наружу вне `perform` (после правки длительности).
-    private func syncSystemState() {
-        do {
-            try reportState()
-        } catch {
-            self.error = error
-        }
-    }
-
     private func reportState() throws {
         onStateRead(try TrackingSyncState.read(from: repository, lock: lock))
     }
@@ -146,20 +137,19 @@ final class TrackingStore {
         let updated = try FileLockCoordinator.perform(lock) {
             try repository.updateDuration(ofSessionWithID: id, to: durationSeconds)
         }
-        reloadProgress()
+        // Длительность уже сохранена. Если прогресс после этого не прочитался, это не ошибка сохранения:
+        // показываем отдельное сообщение, а прогресс перечитывается при закрытии сообщения и при каждом
+        // возврате в приложение (`restore`) — без повторного изменения сессии.
         onSessionsChanged()
-        syncSystemState()
-        return updated
-    }
-
-    func reloadProgress() {
         do {
             try reloadStatus()
+            try reportState()
         } catch {
-            self.error = error
+            self.error = TrackingStoreError.progressNotRefreshed
         }
         sessionsRevision += 1
         refresh()
+        return updated
     }
 
     func refresh() {
@@ -172,7 +162,11 @@ final class TrackingStore {
     }
 
     func dismissError() {
+        let needsProgressReload = error as? TrackingStoreError == .progressNotRefreshed
         error = nil
+        if needsProgressReload {
+            restore()
+        }
     }
 
     func keepRefreshing() async {
@@ -241,5 +235,14 @@ final class TrackingStore {
         } catch {
             self.error = error
         }
+    }
+}
+
+enum TrackingStoreError: LocalizedError, Equatable {
+    /// Изменение сохранено, но накопленный прогресс не удалось перечитать.
+    case progressNotRefreshed
+
+    var errorDescription: String? {
+        String(localized: "Изменения сохранены, но прогресс не обновился. Он обновится при следующем открытии приложения.")
     }
 }

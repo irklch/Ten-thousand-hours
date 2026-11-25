@@ -71,7 +71,9 @@ nonisolated final class SwiftDataSessionRepository: SessionRepository {
     func totalCompletedDurationSeconds() throws -> Int {
         var descriptor = FetchDescriptor<Session>(predicate: #Predicate { $0.endDate != nil })
         descriptor.propertiesToFetch = [\.durationSeconds]
-        return try makeContext().fetch(descriptor).reduce(0) { $0 + ($1.durationSeconds ?? 0) }
+        return try makeContext().fetch(descriptor).reduce(0) {
+            ProgressCalculator.saturatingSum($0, $1.durationSeconds ?? 0)
+        }
     }
 
     func updateDuration(ofSessionWithID id: UUID, to durationSeconds: Int) throws -> SessionSnapshot {

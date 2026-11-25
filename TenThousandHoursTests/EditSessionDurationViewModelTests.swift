@@ -198,4 +198,30 @@ final class EditSessionDurationViewModelTests: XCTestCase {
         XCTAssertEqual(second.currentDurationText, "1 ч 5 мин")
         XCTAssertEqual(second.input, SessionDurationInput(hours: "1", minutes: "5"))
     }
+
+    /// Известная проблема этапа 5: запись прошла, а чтение прогресса после неё упало.
+    @MainActor
+    func testProgressReadFailureAfterSuccessfulSaveIsNotReportedAsSaveFailure() throws {
+        let storage = try TestStorage.inMemory()
+        let failing = FailingSessionRepository(wrapping: storage.repository)
+        let fixture = try makeFixture(failing: failing, storage: storage)
+        let viewModel = EditSessionDurationViewModel(session: fixture.session, store: fixture.store)
+        viewModel.input = SessionDurationInput(hours: "5", minutes: "5")
+
+        failing.failingOperations = [.total]
+        XCTAssertTrue(viewModel.save())
+
+        XCTAssertNil(viewModel.saveErrorMessage)
+        XCTAssertEqual(fixture.store.error as? TrackingStoreError, .progressNotRefreshed)
+        XCTAssertEqual(HomeViewModel(store: fixture.store).errorMessage, TrackingStoreError.progressNotRefreshed.errorDescription)
+        XCTAssertEqual(try storage.repository.completedSessions().first?.durationSeconds, 18_300)
+
+        // Закрытие сообщения перечитывает прогресс; сессия повторно не меняется.
+        failing.failingOperations = [.update]
+        fixture.store.dismissError()
+
+        XCTAssertNil(fixture.store.error)
+        XCTAssertEqual(fixture.store.totalSeconds, 18_300)
+        XCTAssertEqual(try storage.repository.completedSessions().first?.durationSeconds, 18_300)
+    }
 }

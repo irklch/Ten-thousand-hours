@@ -22,6 +22,9 @@ struct HomeViewModel {
         if let storeError = error as? SharedStoreError {
             return storeError.errorDescription
         }
+        if let trackingError = error as? TrackingStoreError {
+            return trackingError.errorDescription
+        }
         return String(localized: "Не удалось сохранить данные. Попробуйте ещё раз.")
     }
 
@@ -37,7 +40,6 @@ struct HomeViewModel {
     func resetProgress() {
         store.resetProgress()
     }
-
 
     func dismissError() {
         store.dismissError()

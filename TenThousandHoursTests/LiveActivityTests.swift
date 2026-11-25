@@ -85,3 +85,27 @@ final class TrackingStoreLiveActivityTests: XCTestCase {
         XCTAssertTrue(reported.isEmpty)
     }
 }
+
+/// Очередь синхронизации Live Activity и напоминаний: более новое состояние всегда применяется последним,
+/// даже если предыдущая операция приостанавливается дольше.
+final class SerialTaskQueueTests: XCTestCase {
+    @MainActor
+    func testOperationsFinishInCallOrderEvenWhenEarlierOneIsSlower() async {
+        let queue = SerialTaskQueue()
+        var log: [String] = []
+
+        let first = queue.enqueue {
+            log.append("start-1")
+            try? await Task.sleep(for: .milliseconds(50))
+            log.append("end-1")
+        }
+        let second = queue.enqueue {
+            log.append("start-2")
+            log.append("end-2")
+        }
+        await first.value
+        await second.value
+
+        XCTAssertEqual(log, ["start-1", "end-1", "start-2", "end-2"])
+    }
+}
