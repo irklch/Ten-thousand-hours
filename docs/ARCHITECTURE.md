@@ -21,6 +21,7 @@ Shared/                     общий код приложения и Widget Ext
 │                           ModelContainerFactory (схема + URL стора в App Group), FileLockCoordinator (flock)
 ├── Tracking/               TrackingStatus, SharedTracking, StartTrackingIntent / StopTrackingIntent
 ├── Widgets/                TrackingWidgetDisplay, TrackingTimelinePlanner, TrackingWidgetView
+├── Reminders/              SharedPreferences (UserDefaults App Group), DailyReminderPlan, DailyReminderScheduler
 ├── DesignSystem/           цвета, типографика, отступы, компоненты
 └── Localizable.xcstrings   строки (язык разработки — ru)
 TenThousandHoursWidgets/    Widget Extension: WidgetBundle, TimelineProvider, Info.plist, entitlements
@@ -86,6 +87,18 @@ TenThousandHoursUITests/    UI-тесты; WidgetUITests — проверка в
 - **Когда вызывается.** В приложении — через `TrackingStore.onActiveSessionRead`: при восстановлении (запуск и `scenePhase == .active`) и после Play/Stop. В intents — через `SharedTracking.didChange()`: перезагрузка виджетов, затем согласование Live Activity.
 - **Процесс intents.** `StartTrackingIntent` и `StopTrackingIntent` реализуют `LiveActivityIntent`, а их файл входит в оба target. Поэтому система выполняет их в процессе приложения, где ActivityKit может запустить или завершить activity. Stop из Lock Screen и Dynamic Island — тот же `StopTrackingIntent`, с той же блокировкой и правилом 60 секунд.
 - **Ограничения.** Если Live Activities выключены или ActivityKit отказал, отказ пишется в лог (`os.Logger`, категория `LiveActivity`), а сессия и таймер в SwiftData продолжают работать. Система может завершить activity сама (≈8 ч активного показа). В этом случае при следующем открытии приложения activity для идущей сессии будет запрошена заново. Push-обновлений и фоновых режимов нет.
+
+## Уведомления и достижение цели (этап 8)
+
+- **Напоминание в 20:00.** `DailyReminderPlan` (чистая функция) строит даты на 30 дней вперёд: сегодня пропускается, если таймер сегодня запускали или останавливали (включая отброшенную сессию < 60 с), если он идёт сейчас или 20:00 уже прошло; при завершённой цели напоминаний нет. Даты — `DateComponents` без часового пояса (год, месяц, день, 20:00), поэтому смена пояса и переход на летнее/зимнее время не сдвигают локальные 20:00. Текст — из макета Figma «Notification».
+- **Планирование.** `DailyReminderScheduler.reschedule` заменяет весь набор ожидающих запросов (по одному `UNCalendarNotificationTrigger` без повтора на день, id `daily-reminder-<дата>`, итого ≤ 30 из лимита 64). Вызывается из `SharedTracking.syncSystemState` — того же места, что синхронизирует Live Activity: после восстановления, Play/Stop, правки истории и сброса в приложении и после intents виджета/Live Activity. Фоновых задач, сервера и polling нет.
+- **Время последнего запуска.** `TimerEngine` записывает момент Play и Stop в `SharedPreferences.lastTrackingDate` (общие `UserDefaults` App Group). Там же только флаг показанного поздравления; сессии и прогресс в `UserDefaults` не хранятся.
+- **Разрешение** запрашивается один раз после Play в приложении — через `onTimerStarted`, который задаёт только `TrackingStore.open`; поэтому ни unit-тесты (и тестовый хост), ни UI-тесты (`-ui-testing`) системный запрос не вызывают. После отказа приложение и виджеты работают как раньше, повторного запроса и баннеров нет; напоминания не планируются.
+- **Нажатие на напоминание** (`AppDelegate` — делегат `UNUserNotificationCenter`) открывает вкладку «Главная», таймер не запускается.
+- **Цель.** `ProgressCalculator.isGoalCompleted` — завершённые сессии ≥ 36 000 000 с; идущая сессия не учитывается и не останавливается автоматически. Сохранённые длительности не обрезаются, отображение ограничено 100 % и 10 000 точками.
+- **Запрет Play** после цели — в `TimerEngine.start` под блокировкой (`SessionError.goalCompleted`), поэтому он действует для приложения, виджетов и intents. Виджет в завершённом состоянии показывает отметку без intent. Правка истории ниже 10 000 часов возвращает Play и напоминания.
+- **Поздравление** (`GoalCelebrationView`, макета в Figma нет) показывается через `TrackingStore.isCelebrationPending`, пока флаг `isGoalCelebrationShown` не выставлен, — в том числе при следующем открытии, если цель достигнута из виджета. «Закрыть» ничего не удаляет; «Начать заново» остаётся на главной вместо Play.
+- **Сброс.** `TimerEngine.resetCompletedGoal` под межпроцессной блокировкой перепроверяет цель и отсутствие активной сессии, затем `deleteAllSessions` удаляет все сессии одним `save()` (при ошибке — `rollback()`, данные не меняются). Затем `TrackingStore` перечитывает состояние, обновляет историю (`sessionsRevision`), виджеты, Live Activity и напоминания, сбрасывает флаг поздравления. Файл SwiftData не удаляется, архив не создаётся.
 
 ## Подготовка к расширениям
 

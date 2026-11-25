@@ -8,4 +8,6 @@ nonisolated protocol SessionRepository {
     func completedSessions() throws -> [SessionSnapshot]
     func totalCompletedDurationSeconds() throws -> Int
     func updateDuration(ofSessionWithID id: UUID, to durationSeconds: Int) throws -> SessionSnapshot
+    /// Удаляет все сессии одним сохранением: либо удалены все, либо ни одной.
+    func deleteAllSessions() throws
 }

@@ -5,6 +5,8 @@ struct HomeViewModel {
 
     var isRunning: Bool { store.isRunning }
     var isProcessing: Bool { store.isProcessing }
+    /// Вместо Play — «Начать заново»: цель достигнута и таймер не идёт (идущую сессию всё ещё можно остановить).
+    var showsRestart: Bool { store.isGoalCompleted && !store.isRunning }
     var timerText: String { ElapsedTimeFormatter.clock(store.currentSessionElapsedSeconds) }
     var timerAccessibilityValue: String { ElapsedTimeFormatter.spoken(store.currentSessionElapsedSeconds) }
     var progress: ProgressDisplay { ProgressDisplay(progress: store.progress) }
@@ -31,6 +33,11 @@ struct HomeViewModel {
             store.start()
         }
     }
+
+    func resetProgress() {
+        store.resetProgress()
+    }
+
 
     func dismissError() {
         store.dismissError()

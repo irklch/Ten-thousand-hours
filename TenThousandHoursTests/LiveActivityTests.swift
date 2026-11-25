@@ -49,7 +49,7 @@ final class TrackingStoreLiveActivityTests: XCTestCase {
         var reported: [SessionSnapshot?] = []
         let store = TrackingStore(
             repository: storage.repository,
-            onActiveSessionRead: { reported.append($0) },
+            onStateRead: { reported.append($0.activeSession) },
             now: clock.provider()
         )
 
@@ -76,7 +76,7 @@ final class TrackingStoreLiveActivityTests: XCTestCase {
         var reported: [SessionSnapshot?] = []
         let store = TrackingStore(
             repository: repository,
-            onActiveSessionRead: { reported.append($0) }
+            onStateRead: { reported.append($0.activeSession) }
         )
 
         store.start()

@@ -9,7 +9,7 @@ enum SharedTracking {
 
     static func engine() throws -> TimerEngine {
         let (repository, lock) = try storage()
-        return TimerEngine(repository: repository, lock: lock)
+        return TimerEngine(repository: repository, lock: lock, preferences: .shared)
     }
 
     static func status() throws -> TrackingStatus {
@@ -17,17 +17,25 @@ enum SharedTracking {
         return try TrackingStatus.read(from: repository, lock: lock)
     }
 
-    /// После сохранённого Play/Stop: виджеты получают запрос на перезагрузку, а Live Activity приводится
-    /// в соответствие с тем, что сейчас лежит в SwiftData. Если хранилище не читается, ошибка выходит из `perform`.
+    /// После сохранённого Play/Stop: виджеты получают запрос на перезагрузку, а Live Activity и напоминания
+    /// приводятся в соответствие с тем, что сейчас лежит в SwiftData. Если хранилище не читается, ошибка выходит из `perform`.
     static func didChange() async {
         WidgetTimelineReloader.reload()
         do {
             let (repository, lock) = try storage()
-            let active = try FileLockCoordinator.perform(lock) { try repository.activeSession() }
-            await LiveActivityController.sync(activeSession: active)
+            await syncSystemState(try TrackingSyncState.read(from: repository, lock: lock))
         } catch {
             LiveActivityController.logSyncFailure(error)
         }
+    }
+
+    /// Общий для приложения и intents шаг: Live Activity и напоминания следуют за состоянием из хранилища.
+    static func syncSystemState(_ state: TrackingSyncState) async {
+        await LiveActivityController.sync(activeSession: state.activeSession)
+        await DailyReminderScheduler.reschedule(
+            isRunning: state.activeSession != nil,
+            isGoalCompleted: state.isGoalCompleted
+        )
     }
 
     /// Контейнер кэшируется только после успешного открытия: если хранилище временно недоступно,

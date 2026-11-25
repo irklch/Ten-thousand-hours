@@ -82,7 +82,13 @@ struct TrackingWidgetView: View {
             appearance: renderingMode == .fullColor ? .standard : .monochrome
         )
         Group {
-            if ready.isRunning {
+            if ready.isGoalCompleted {
+                // Без intent: нажатие открывает приложение, где доступно «Начать заново».
+                PlayStopButtonLabel(
+                    symbol: .completed,
+                    appearance: renderingMode == .fullColor ? .standard : .monochrome
+                )
+            } else if ready.isRunning {
                 Button(intent: StopTrackingIntent()) { label }
             } else {
                 Button(intent: StartTrackingIntent()) { label }

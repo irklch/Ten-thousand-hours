@@ -9,6 +9,10 @@ final class TrackingStore {
     private(set) var isProcessing = false
     private(set) var error: (any Error)?
     private(set) var sessionsRevision = 0
+    /// Завершённые сессии дают не меньше 10 000 часов: новый Play недоступен до «Начать заново».
+    private(set) var isGoalCompleted = false
+    /// Цель достигнута, а поздравление в этом цикле ещё не показано (в том числе если цель достигнута из виджета).
+    private(set) var isCelebrationPending = false
 
     var totalSeconds: Int { progress.totalSeconds }
     var completedHours: Int { progress.completedHours }
@@ -19,7 +23,9 @@ final class TrackingStore {
     @ObservationIgnored private let repository: any SessionRepository
     @ObservationIgnored private let lock: FileLockCoordinator?
     @ObservationIgnored private let onSessionsChanged: () -> Void
-    @ObservationIgnored private let onActiveSessionRead: (SessionSnapshot?) -> Void
+    @ObservationIgnored private let onStateRead: (TrackingSyncState) -> Void
+    @ObservationIgnored private let onTimerStarted: () -> Void
+    @ObservationIgnored private let preferences: SharedPreferences
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var completedSessionsSeconds = 0
     @ObservationIgnored private var refreshClientCount = 0
@@ -29,30 +35,37 @@ final class TrackingStore {
     ///   - lock: та же межпроцессная блокировка, что использует виджет; `nil` только для хранилищ в памяти.
     ///   - onSessionsChanged: вызывается после успешного сохранения Play, Stop и правки длительности
     ///     (в приложении перезагружает таймлайн виджета).
-    ///   - onActiveSessionRead: вызывается с активной сессией из хранилища после успешного восстановления,
-    ///     Play и Stop (в приложении приводит Live Activity в соответствие).
+    ///   - onStateRead: вызывается с состоянием из хранилища после успешного восстановления, Play, Stop,
+    ///     правки длительности и сброса (в приложении приводит в соответствие Live Activity и напоминания).
+    ///   - onTimerStarted: вызывается после Play в приложении, создавшего сессию (в приложении — запрос
+    ///     разрешения на напоминания).
+    ///   - preferences: время последнего Play/Stop и флаг показанного поздравления (в приложении — App Group).
     init(
         repository: any SessionRepository,
         lock: FileLockCoordinator? = nil,
+        preferences: SharedPreferences = .ephemeral(),
         onSessionsChanged: @escaping () -> Void = {},
-        onActiveSessionRead: @escaping (SessionSnapshot?) -> Void = { _ in },
+        onStateRead: @escaping (TrackingSyncState) -> Void = { _ in },
+        onTimerStarted: @escaping () -> Void = {},
         now: @escaping () -> Date = Date.init
     ) {
         self.repository = repository
         self.lock = lock
+        self.preferences = preferences
         self.onSessionsChanged = onSessionsChanged
-        self.onActiveSessionRead = onActiveSessionRead
+        self.onStateRead = onStateRead
+        self.onTimerStarted = onTimerStarted
         self.now = now
-        self.engine = TimerEngine(repository: repository, lock: lock, now: now)
+        self.engine = TimerEngine(repository: repository, lock: lock, preferences: preferences, now: now)
     }
 
     nonisolated deinit {}
 
     func restore() {
         perform {
-            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
+            try reloadStatus()
             sessionsRevision += 1
-            try reportActiveSession()
+            try reportState()
         }
     }
 
@@ -63,26 +76,65 @@ final class TrackingStore {
             let result = try engine.start()
             if case .started = result {
                 onSessionsChanged()
+                onTimerStarted()
             }
-            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
-            try reportActiveSession()
+            try reloadStatus()
+            try reportState()
         }
     }
 
     func stop() {
         perform {
             let result = try engine.stop()
-            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
+            try reloadStatus()
             sessionsRevision += 1
             if result != .notRunning {
                 onSessionsChanged()
             }
-            try reportActiveSession()
+            try reportState()
         }
     }
 
-    private func reportActiveSession() throws {
-        onActiveSessionRead(try FileLockCoordinator.perform(lock) { try repository.activeSession() })
+    /// «Начать заново» после 10 000 часов. Условия перепроверяет `TimerEngine` под межпроцессной блокировкой;
+    /// при ошибке сохранения сессии не удаляются, прогресс не обнуляется, а `error` получает ошибку.
+    func resetProgress() {
+        perform {
+            try engine.resetCompletedGoal()
+            preferences.isGoalCelebrationShown = false
+            try reloadStatus()
+            sessionsRevision += 1
+            onSessionsChanged()
+            try reportState()
+        }
+    }
+
+    func dismissCelebration() {
+        guard isCelebrationPending else { return }
+        preferences.isGoalCelebrationShown = true
+        isCelebrationPending = false
+    }
+
+    /// Передаёт состояние наружу вне `perform` (после правки длительности).
+    private func syncSystemState() {
+        do {
+            try reportState()
+        } catch {
+            self.error = error
+        }
+    }
+
+    private func reportState() throws {
+        onStateRead(try TrackingSyncState.read(from: repository, lock: lock))
+    }
+
+    private func reloadStatus() throws {
+        completedSessionsSeconds = try engine.restore().completedSessionsSeconds
+        isGoalCompleted = ProgressCalculator.isGoalCompleted(completedSessionsSeconds: completedSessionsSeconds)
+        // Правка истории вернула цель в незавершённое состояние: при повторном достижении поздравим снова.
+        if !isGoalCompleted, preferences.isGoalCelebrationShown {
+            preferences.isGoalCelebrationShown = false
+        }
+        isCelebrationPending = isGoalCompleted && !preferences.isGoalCelebrationShown
     }
 
     func completedSessions() throws -> [SessionSnapshot] {
@@ -96,12 +148,13 @@ final class TrackingStore {
         }
         reloadProgress()
         onSessionsChanged()
+        syncSystemState()
         return updated
     }
 
     func reloadProgress() {
         do {
-            completedSessionsSeconds = try engine.restore().completedSessionsSeconds
+            try reloadStatus()
         } catch {
             self.error = error
         }
